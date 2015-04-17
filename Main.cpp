@@ -1,3 +1,13 @@
+
+/*Primera entrega proyecto final gráficas computacionales
+Arturo Torres Sánchez A01212763
+Erika K. Ponce Ocampo A01126220
+ 
+ Camera Walk
+ 
+ */
+
+
 #ifdef _WIN32
 	#include "glut.h"
 #elif __APPLE__
