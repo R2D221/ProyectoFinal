@@ -17,6 +17,7 @@ bool w;
 bool a;
 bool s;
 bool d;
+bool spacebar;
 
 void Init();
 void Display();
@@ -111,6 +112,7 @@ void Keyboard(unsigned char  key, int x, int y)
         case 'd':
             d=true;
             break;
+       
         default:
             break;
     }
@@ -131,6 +133,7 @@ void KeyboardUP(unsigned char  key, int x, int y)
         case 'd':
             d=false;
             break;
+        
         default:
             break;
     }
@@ -138,6 +141,7 @@ void KeyboardUP(unsigned char  key, int x, int y)
 void idle(int _i)
 {
 	if (w)
+        
 	{
 		float step = 0.1;
 		float x = 0.1 * cos(ang);
