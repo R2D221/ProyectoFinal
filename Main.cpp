@@ -12,12 +12,14 @@ GLfloat distance = 5;
 
 GLint width = 300;
 GLint height = 300;
+GLfloat caminar;
 
 bool w;
 bool a;
 bool s;
 bool d;
-bool spacebar;
+
+
 
 void Init();
 void Display();
@@ -148,6 +150,8 @@ void idle(int _i)
 		float z = step * sin(ang);
 		position[0] += x;
 		position[2] += z;
+        caminar+= 1;
+        position[1]=(1.6+sin(caminar)*0.05);
 	}
 	if (a)
 	{
@@ -160,6 +164,8 @@ void idle(int _i)
 		float z = step * sin(ang);
 		position[0] -= x;
 		position[2] -= z;
+        caminar-= 1;
+        position[1]=(1.6+sin(caminar)*0.05);
 	}
 	if (d)
 	{
