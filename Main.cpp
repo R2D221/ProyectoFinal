@@ -30,8 +30,6 @@ void Init()
     position[1]=1.60;
     position[2]=0.0;
   
- 
-
 }
 
 void Display()
@@ -54,7 +52,14 @@ void Display()
     
     //luces
     
+    
+    GLfloat light_position[]={0.0,20,0.0,1.0};
+    GLfloat light_color[]={1,1,1,1};
+    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_color);
     glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    
     
 	
     //Plano
