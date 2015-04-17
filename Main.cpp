@@ -139,7 +139,11 @@ void idle(int _i)
 {
 	if (w)
 	{
-		//TODO
+		float step = 0.1;
+		float x = 0.1 * cos(ang);
+		float z = 0.1 * sin(ang);
+		position[0] += x;
+		position[2] += z;
 	}
 	if (a)
 	{
@@ -147,17 +151,18 @@ void idle(int _i)
 	}
 	if (s)
 	{
-		//TODO
+		float step = 0.1;
+		float x = 0.1 * cos(ang);
+		float z = 0.1 * sin(ang);
+		position[0] -= x;
+		position[2] -= z;
 	}
 	if (d)
 	{
 		ang+=0.1;
 	}
-}
 
-void Timer(int value)
-{
-	
+	glutTimerFunc(33, idle, 0);
 }
 
 int main (int artcp, char **argv)
@@ -170,7 +175,6 @@ int main (int artcp, char **argv)
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUP);
 	glutTimerFunc(33, idle, 0);
-    //glutIdleFunc(idle);
     
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
