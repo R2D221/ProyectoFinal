@@ -144,8 +144,8 @@ void idle(int _i)
         
 	{
 		float step = 0.1;
-		float x = 0.1 * cos(ang);
-		float z = 0.1 * sin(ang);
+		float x = step * cos(ang);
+		float z = step * sin(ang);
 		position[0] += x;
 		position[2] += z;
 	}
@@ -156,8 +156,8 @@ void idle(int _i)
 	if (s)
 	{
 		float step = 0.1;
-		float x = 0.1 * cos(ang);
-		float z = 0.1 * sin(ang);
+		float x = step * cos(ang);
+		float z = step * sin(ang);
 		position[0] -= x;
 		position[2] -= z;
 	}
