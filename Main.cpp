@@ -13,6 +13,11 @@ GLfloat distance = 5;
 GLint width = 300;
 GLint height = 300;
 
+bool w;
+bool a;
+bool s;
+bool d;
+
 void Init();
 void Display();
 void Reshape();
@@ -46,6 +51,11 @@ void Display()
 		0, 1, 0);
 
 	glMatrixMode(GL_MODELVIEW);
+    
+    //luces
+    
+    glEnable(GL_LIGHTING);
+    
 	
     //Plano
     glLoadIdentity();
@@ -55,7 +65,6 @@ void Display()
     glVertex3f(-100,0,100);
     glVertex3f(-100,0,-100);
     glVertex3f(100,0,-100);
-    
     glEnd();
     
     // Tetera
@@ -70,6 +79,7 @@ void Display()
 
 void Reshape(int w, int h)
 {
+    
 	width = w;
 	height = h;
 	glViewport(0, 0, w, h);	//actualizar la ventana
@@ -77,6 +87,51 @@ void Reshape(int w, int h)
 	glLoadIdentity();
 	glOrtho(-1, 1, -1, 1, -10, 10);
     
+    
+}
+
+void Keyboard(unsigned char  key, int x, int y){
+
+    switch (key) {
+        case'w':
+            w=true;
+            break;
+        case 'a':
+            a= true;
+            break;
+        case 's':
+            s= true;
+            break;
+        case 'd':
+            d=true;
+            break;
+            
+        default:
+            break;
+    }
+    
+}
+void KeyboardUP(unsigned char  key, int x, int y){
+    switch (key) {
+        case'w':
+            w=false;
+            break;
+        case 'a':
+            a= false;
+            break;
+        case 's':
+            s= false;
+            break;
+        case 'd':
+            d=false;
+            break;
+            
+        default:
+            break;
+    }
+    
+}
+void idle(){
     
 }
 
@@ -89,6 +144,10 @@ int main (int artcp, char **argv)
 	glutCreateWindow("Rotating teapot");	// crear una ventana
 	glutDisplayFunc(Display);	// callback principal
 	glutReshapeFunc(Reshape);	// callback de reshape
+    glutKeyboardFunc(Keyboard);
+    glutKeyboardUpFunc(KeyboardUP);
+    glutIdleFunc(idle);
+    
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
 	return 0;
