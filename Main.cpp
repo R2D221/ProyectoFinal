@@ -20,6 +20,8 @@ void Init()
 {
 	glClearColor(1,1,1,1);
 	glEnable(GL_DEPTH_TEST);
+    
+    // :3 . I . t. y.
 
 }
 
