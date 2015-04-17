@@ -44,8 +44,9 @@ void Display()
 	glLoadIdentity();
 
     gluPerspective(40, (float)width / height, 0.1, 50);
-	gluLookAt(distance * cos(ang),position[1], distance * sin(ang),
+	gluLookAt(
 		position[0], position[1], position[2],
+		distance * cos(ang), position[1], distance * sin(ang),
 		0, 1, 0);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -134,7 +135,7 @@ void KeyboardUP(unsigned char  key, int x, int y)
             break;
     }
 }
-void idle()
+void idle(int _i)
 {
 	if (w)
 	{
@@ -154,7 +155,10 @@ void idle()
 	}
 }
 
-
+void Timer(int value)
+{
+	
+}
 
 int main (int artcp, char **argv)
 {
@@ -165,7 +169,8 @@ int main (int artcp, char **argv)
 	glutReshapeFunc(Reshape);	// callback de reshape
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUP);
-    glutIdleFunc(idle);
+	glutTimerFunc(33, idle, 0);
+    //glutIdleFunc(idle);
     
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
