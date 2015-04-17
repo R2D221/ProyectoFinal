@@ -22,6 +22,7 @@ void Init()
 	glEnable(GL_DEPTH_TEST);
     
     // :3 . I . t. y.
+	// D: D:
 
 }
 
