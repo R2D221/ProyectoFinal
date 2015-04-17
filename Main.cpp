@@ -142,7 +142,7 @@ void idle()
 	}
 	if (a)
 	{
-		//TODO
+		ang-=0.1;
 	}
 	if (s)
 	{
@@ -150,7 +150,7 @@ void idle()
 	}
 	if (d)
 	{
-		//TODO
+		ang+=0.1;
 	}
 }
 
