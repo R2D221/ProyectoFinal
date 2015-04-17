@@ -90,8 +90,8 @@ void Reshape(int w, int h)
     
 }
 
-void Keyboard(unsigned char  key, int x, int y){
-
+void Keyboard(unsigned char  key, int x, int y)
+{
     switch (key) {
         case'w':
             w=true;
@@ -105,14 +105,14 @@ void Keyboard(unsigned char  key, int x, int y){
         case 'd':
             d=true;
             break;
-            
         default:
             break;
     }
-    
 }
-void KeyboardUP(unsigned char  key, int x, int y){
-    switch (key) {
+void KeyboardUP(unsigned char  key, int x, int y)
+{
+    switch (key)
+	{
         case'w':
             w=false;
             break;
@@ -125,14 +125,28 @@ void KeyboardUP(unsigned char  key, int x, int y){
         case 'd':
             d=false;
             break;
-            
         default:
             break;
     }
-    
 }
-void idle(){
-    
+void idle()
+{
+	if (w)
+	{
+		//TODO
+	}
+	if (a)
+	{
+		//TODO
+	}
+	if (s)
+	{
+		//TODO
+	}
+	if (d)
+	{
+		//TODO
+	}
 }
 
 

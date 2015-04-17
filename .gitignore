@@ -229,3 +229,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+glut.h
+glut32.lib
+ProyectoFinal.vcxproj
