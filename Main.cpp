@@ -2,9 +2,9 @@
 /*Primera entrega proyecto final gráficas computacionales
 Arturo Torres Sánchez A01212763
 Erika K. Ponce Ocampo A01126220
- 
+
  Camera Walk
- 
+
  */
 
 
@@ -42,13 +42,13 @@ void Init()
     position[0]= 0.0;
     position[1]=1.60;
     position[2]=0.0;
-  
+
 }
 
 void Display()
 {
 
-	
+
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -59,23 +59,23 @@ void Display()
     gluPerspective(40, (float)width / height, 0.1, 50);
 	gluLookAt(
 		position[0], position[1], position[2],
-		distance * cos(ang), position[1], distance * sin(ang),
+		position[0] + distance * cos(ang), position[1], position[2] + distance * sin(ang),
 		0, 1, 0);
 
 	glMatrixMode(GL_MODELVIEW);
-    
+
     //luces
-    
-    
+
+
     GLfloat light_position[]={0.0,20,0.0,1.0};
     GLfloat light_color[]={1,1,1,1};
     glLightfv(GL_LIGHT0,GL_POSITION,light_position);
     glLightfv(GL_LIGHT0,GL_DIFFUSE,light_color);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    
-    
-	
+
+
+
     //Plano
     glLoadIdentity();
     glBegin(GL_QUADS);
@@ -85,7 +85,7 @@ void Display()
     glVertex3f(-100,0,-100);
     glVertex3f(100,0,-100);
     glEnd();
-    
+
     // Tetera
 	glLoadIdentity();
 	glColor3f(1, 0, 0);
@@ -98,15 +98,15 @@ void Display()
 
 void Reshape(int w, int h)
 {
-    
+
 	width = w;
 	height = h;
 	glViewport(0, 0, w, h);	//actualizar la ventana
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-1, 1, -1, 1, -10, 10);
-    
-    
+
+
 }
 
 void Keyboard(unsigned char  key, int x, int y)
@@ -124,7 +124,7 @@ void Keyboard(unsigned char  key, int x, int y)
         case 'd':
             d=true;
             break;
-       
+
         default:
             break;
     }
@@ -145,7 +145,7 @@ void KeyboardUP(unsigned char  key, int x, int y)
         case 'd':
             d=false;
             break;
-        
+
         default:
             break;
     }
@@ -153,7 +153,6 @@ void KeyboardUP(unsigned char  key, int x, int y)
 void idle(int _i)
 {
 	if (w)
-        
 	{
 		float step = 0.1;
 		float x = step * cos(ang);
@@ -195,7 +194,7 @@ int main (int artcp, char **argv)
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUP);
 	glutTimerFunc(33, idle, 0);
-    
+
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
 	return 0;
