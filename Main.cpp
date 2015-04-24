@@ -58,18 +58,29 @@ void Init()
 	position[1] = 1.60;
 	position[2] = 0.0;
     
+     //textura
     glEnable(GL_TEXTURE_2D);
     GLubyte * data;
     GLint x,y,d;
-    data = LoadTGA("pasto_1",&x,&y,&d);
+    data = LoadTGA("pasto_1.tga",&x,&y,&d);
     
-    //textura
-    
+   
     glBindTexture(GL_TEXTURE_2D,1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0, GL_RGB,GL_UNSIGNED_BYTE,data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    
+    
+    
+    /*glBindTexture(GL_TEXTURE_2D,1);
     
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);*/
     
     
     
@@ -107,17 +118,23 @@ void Display()
 	glEnable(GL_LIGHT0);
     
     
-
+    
 
 	//Plano
 	glLoadIdentity();
 	glBegin(GL_QUADS);
 	glColor3f(0, 0, 1);
+    glTexCoord2f(100, 100);
 	glVertex3f(100, 0, 100);
+    glTexCoord2f(-100, 100);
 	glVertex3f(-100, 0, 100);
+    glTexCoord2f(-100, -100);
 	glVertex3f(-100, 0, -100);
+    glTexCoord2f(100, -100);
 	glVertex3f(100, 0, -100);
+   
 	glEnd();
+    
     
     
 	//muros
@@ -125,12 +142,14 @@ void Display()
 	glTranslatef(10.0, 1.0, 10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
-
+    
 	glLoadIdentity();
 	glTranslatef(-10.0, 1.0, -10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
-
+    
+   
+    
 	// Tetera
 	glLoadIdentity();
 	glColor3f(1, 0, 0);
