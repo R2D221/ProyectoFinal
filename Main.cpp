@@ -176,7 +176,7 @@ void KeyboardUP(unsigned char  key, int x, int y)
 		break;
 	}
 }
-void idle(int _i)
+void Movimiento(int _i)
 {
 
 	if (w)
@@ -221,7 +221,7 @@ void idle(int _i)
 		ang += 0.1;
 	}
 
-	glutTimerFunc(33, idle, 0);
+	glutTimerFunc(33, Movimiento, 0);
 }
 
 int main(int artcp, char **argv)
@@ -233,7 +233,7 @@ int main(int artcp, char **argv)
 	glutReshapeFunc(Reshape);	// callback de reshape
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(KeyboardUP);
-	glutTimerFunc(33, idle, 0);
+	glutTimerFunc(33, Movimiento, 0);
 
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
