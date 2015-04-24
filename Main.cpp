@@ -31,11 +31,30 @@ bool a;
 bool s;
 bool d;
 
+bool isColliding(GLfloat * position){
+    
+    if(position[0]<=0.0&& position[0]>=-20.0&& position[2]<=10.5 && position[2]>=9.5){
+        return true;
+        
+    }
+    
+    
+    
+    if(position[0]<=0.0&& position[0]>=20.0&& position[2]<=-10.5 && position[2]>=-9.5){
+        return true;
+        
+    }
+    
+    return false;
+    
+}
+
 
 
 void Init();
 void Display();
 void Reshape();
+
 
 void Init()
 {
@@ -46,6 +65,7 @@ void Init()
     position[2]=0.0;
 
 }
+
 
 void Display()
 {
@@ -165,15 +185,22 @@ void KeyboardUP(unsigned char  key, int x, int y)
 }
 void idle(int _i)
 {
+    
 	if (w)
 	{
-		float step = 0.1;
-		float x = step * cos(ang);
-		float z = step * sin(ang);
-		position[0] += x;
-		position[2] += z;
-        caminar+= 1;
-        position[1]=(1.6+sin(caminar)*0.05);
+        if(!isColliding(position)){
+            float step = 0.1;
+            float x = step * cos(ang);
+            float z = step * sin(ang);
+            position[0] += x;
+            position[2] += z;
+            caminar+= 1;
+            position[1]=(1.6+sin(caminar)*0.05);
+            
+            
+        }
+		
+        
 	}
 	if (a)
 	{
