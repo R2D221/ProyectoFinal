@@ -15,6 +15,7 @@ Camera Walk
 #endif
 
 #include <math.h>
+#include "targa.h"
 
 GLfloat ang = 0;
 GLfloat position[3];
@@ -56,7 +57,23 @@ void Init()
 	position[0] = 0.0;
 	position[1] = 1.60;
 	position[2] = 0.0;
-
+    
+    glEnable(GL_TEXTURE_2D);
+    GLubyte * data;
+    GLint x,y,d;
+    data = LoadTGA("pasto_1",&x,&y,&d);
+    
+    //textura
+    
+    glBindTexture(GL_TEXTURE_2D,1);
+    
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+    
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+    
+    
+    
+    
 }
 
 
@@ -88,7 +105,8 @@ void Display()
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-
+    
+    
 
 
 	//Plano
@@ -100,7 +118,8 @@ void Display()
 	glVertex3f(-100, 0, -100);
 	glVertex3f(100, 0, -100);
 	glEnd();
-
+    
+    
 	//muros
 	glLoadIdentity();
 	glTranslatef(10.0, 1.0, 10.0);
