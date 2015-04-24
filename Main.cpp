@@ -91,7 +91,13 @@ void Display()
     //muros
     glLoadIdentity();
     glTranslatef(10.0, 1.0, 10.0);
-    glutSolidCube(3);
+    glScaled(20, 15, 1);
+    glutSolidCube(1);
+    
+    glLoadIdentity();
+    glTranslatef(-10.0, 1.0,-10.0);
+    glScaled(20, 15, 1);
+    glutSolidCube(1);
 
     // Tetera
 	glLoadIdentity();
