@@ -24,6 +24,8 @@ GLint width = 300;
 GLint height = 300;
 GLfloat caminar;
 
+
+
 bool w;
 bool a;
 bool s;
@@ -85,6 +87,11 @@ void Display()
     glVertex3f(-100,0,-100);
     glVertex3f(100,0,-100);
     glEnd();
+
+    //muros
+    glLoadIdentity();
+    glTranslatef(10.0, 1.0, 10.0);
+    glutSolidCube(3);
 
     // Tetera
 	glLoadIdentity();
