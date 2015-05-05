@@ -29,7 +29,7 @@ GLfloat caminar;
 #define AMMO_COUNT 100
 
 #define numeroEnemigos 10
-#define ENEMIGO_STEP 0.01
+#define ENEMIGO_STEP 0.025
 
 bool ammo_isActive[AMMO_COUNT];
 GLfloat ammo_initialPosition_x[AMMO_COUNT];
@@ -59,6 +59,11 @@ bool a;
 bool s;
 bool d;
 
+GLfloat calculateDistance(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
+{
+	return sqrt(pow(y2 - y1, 2) + pow(x2 - x1, 2));
+}
+
 bool isCollidingWithWalls(GLfloat * position)
 {
     if (position[0] >= -1.0&& position[0] <= 21.0&& position[2] <= 11.5 && position[2] >= 8.5)
@@ -70,7 +75,7 @@ bool isCollidingWithWalls(GLfloat * position)
     return false;
 }
 
-void enemyIsCollidingWithAmmo()
+void DetectEnemyCollidingWithAmmo()
 {
 	for (int i = 0; i < AMMO_COUNT; i++)
 	{
@@ -78,16 +83,29 @@ void enemyIsCollidingWithAmmo()
 
 		for (int j = 0; j < numeroEnemigos; j++)
 		{
-			GLfloat distancia =	sqrt(
-					pow(enemigo_posicionInicial_X[j] - ammo_initialPosition_x[i], 2)
-					+
-					pow(enemigo_posicionInicial_Z[j] - ammo_initialPosition_z[i], 2)
-				);
-			if (distancia < 0.5)
+			if (!enemigo_activo[j]) continue;
+
+			GLfloat distancia = calculateDistance(ammo_initialPosition_x[i], ammo_initialPosition_z[i], enemigo_posicionInicial_X[j], enemigo_posicionInicial_Z[j]);
+			if (distancia < 1)
 			{
 				enemigo_activo[j] = false;
 				ammo_isActive[i] = false;
+				printf("Colision de bala con enemigo\n");
 			}
+		}
+	}
+}
+
+void DetectEnemyCollidingWithPlayer()
+{
+	for (int j = 0; j < numeroEnemigos; j++)
+	{
+		if (!enemigo_activo[j]) continue;
+
+		GLfloat distancia = calculateDistance(position[0], position[2], enemigo_posicionInicial_X[j], enemigo_posicionInicial_Z[j]);
+		if (distancia < 1)
+		{
+			printf("Colision de enemigo con el jugador\n");
 		}
 	}
 }
@@ -96,18 +114,13 @@ void MoveEnemy()
 {
 	for (int i = 0; i < numeroEnemigos; i++)
 	{
+		if (!enemigo_activo[i]) continue;
+		if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
+
 		GLfloat enemigo_angulo =	atan2(
 				(enemigo_posicionInicial_Z[i] - position[2]),
 				(enemigo_posicionInicial_X[i] - position[0])
 			);
-
-		printf("Enemigo X: %f\n", enemigo_posicionInicial_X[i]);
-		printf("Enemigo Z: %f\n", enemigo_posicionInicial_Z[i]);
-		printf("Camara X: %f\n", position[0]);
-		printf("Camara X: %f\n", position[2]);
-		printf("Angulo: %f\n", enemigo_angulo);
-		printf("Step X: %f\n", cos(enemigo_angulo) * ENEMIGO_STEP);
-		printf("Step Z: %f\n", sin(enemigo_angulo) * ENEMIGO_STEP);
 		enemigo_posicionInicial_X[i] -= cos(enemigo_angulo) * ENEMIGO_STEP;
 		enemigo_posicionInicial_Z[i] -= sin(enemigo_angulo) * ENEMIGO_STEP;
 	}
@@ -381,7 +394,8 @@ void Movimiento(int _i)
             ammo_increaseTimeAlive(i);
         }
     }
-	enemyIsCollidingWithAmmo();
+	DetectEnemyCollidingWithPlayer();
+	DetectEnemyCollidingWithAmmo();
 	MoveEnemy();
 
     glutTimerFunc(33, Movimiento, 0);
