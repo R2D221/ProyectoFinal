@@ -121,6 +121,7 @@ void Display()
     
 
 	//Plano
+    glEnable(GL_TEXTURE_2D);
 	glLoadIdentity();
 	glBegin(GL_QUADS);
 	glColor3f(0, 0, 1);
@@ -132,8 +133,8 @@ void Display()
 	glVertex3f(-100, 0, -100);
     glTexCoord2f(100, -100);
 	glVertex3f(100, 0, -100);
-   
 	glEnd();
+    glDisable(GL_TEXTURE_2D);
     
     
     
