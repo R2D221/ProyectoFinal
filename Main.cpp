@@ -12,6 +12,7 @@
 #include <GLUT/GLUT.h>
 #endif
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include "targa.h"
 
@@ -28,7 +29,7 @@ GLfloat caminar;
 #define AMMO_COUNT 100
 
 #define numeroEnemigos 10
-
+#define ENEMIGO_STEP 0.01
 
 bool ammo_isActive[AMMO_COUNT];
 GLfloat ammo_initialPosition_x[AMMO_COUNT];
@@ -88,6 +89,27 @@ void enemyIsCollidingWithAmmo()
 				ammo_isActive[i] = false;
 			}
 		}
+	}
+}
+
+void MoveEnemy()
+{
+	for (int i = 0; i < numeroEnemigos; i++)
+	{
+		GLfloat enemigo_angulo =	atan2(
+				(enemigo_posicionInicial_Z[i] - position[2]),
+				(enemigo_posicionInicial_X[i] - position[0])
+			);
+
+		printf("Enemigo X: %f\n", enemigo_posicionInicial_X[i]);
+		printf("Enemigo Z: %f\n", enemigo_posicionInicial_Z[i]);
+		printf("Camara X: %f\n", position[0]);
+		printf("Camara X: %f\n", position[2]);
+		printf("Angulo: %f\n", enemigo_angulo);
+		printf("Step X: %f\n", cos(enemigo_angulo) * ENEMIGO_STEP);
+		printf("Step Z: %f\n", sin(enemigo_angulo) * ENEMIGO_STEP);
+		enemigo_posicionInicial_X[i] -= cos(enemigo_angulo) * ENEMIGO_STEP;
+		enemigo_posicionInicial_Z[i] -= sin(enemigo_angulo) * ENEMIGO_STEP;
 	}
 }
 
@@ -239,6 +261,7 @@ void Display()
 		}
 	}
 
+	glLoadIdentity();
     glutSwapBuffers();
     glutPostRedisplay();
 }
@@ -359,6 +382,7 @@ void Movimiento(int _i)
         }
     }
 	enemyIsCollidingWithAmmo();
+	MoveEnemy();
 
     glutTimerFunc(33, Movimiento, 0);
 }
