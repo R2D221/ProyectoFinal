@@ -25,6 +25,22 @@ GLint width = 300;
 GLint height = 300;
 GLfloat caminar;
 
+GLfloat ammo[3][3];
+
+class Ammo
+{
+	bool isActive;
+	GLfloat *initialPosition;
+	GLfloat angle;
+	public:
+		bool IsActive() { return isActive; }
+		GLfloat* getInitialPosition() { return initialPosition; }
+		GLfloat getAngle() { return angle; }
+
+		void setActive(bool value) { isActive = value; }
+		void setInitialPosition(GLfloat* value) { initialPosition = value; }
+		void setAngle(GLfloat value) { angle = value; }
+};
 
 
 bool w;
@@ -154,21 +170,17 @@ void Reshape(int w, int h)
 void Keyboard(unsigned char  key, int x, int y)
 {
 	switch (key) {
-	case'w':
-		w = true;
-		break;
-	case 'a':
-		a = true;
-		break;
-	case 's':
-		s = true;
-		break;
-	case 'd':
-		d = true;
-		break;
+		case 'w':	w = true;
+		break;	//
+		case 'a':	a = true;
+		break;	//
+		case 's':	s = true;
+		break;	//
+		case 'd':	d = true;
+		break;	//
+		case ' ':
 
-	default:
-		break;
+		default: break;
 	}
 }
 void KeyboardUP(unsigned char  key, int x, int y)
