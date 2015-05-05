@@ -25,23 +25,26 @@ GLint width = 300;
 GLint height = 300;
 GLfloat caminar;
 
-GLfloat ammo[3][3];
+#define AMMO_MAX_TIMEALIVE 100
+#define AMMO_STEP 1
+#define AMMO_COUNT 100
 
-class Ammo
+bool ammo_isActive[AMMO_COUNT];
+GLfloat ammo_initialPosition_x[AMMO_COUNT];
+GLfloat ammo_initialPosition_y[AMMO_COUNT];
+GLfloat ammo_initialPosition_z[AMMO_COUNT];
+GLfloat ammo_angle[AMMO_COUNT];
+int ammo_timeAlive[AMMO_COUNT];
+
+void ammo_increaseTimeAlive(int index)
 {
-	bool isActive;
-	GLfloat *initialPosition;
-	GLfloat angle;
-	public:
-		bool IsActive() { return isActive; }
-		GLfloat* getInitialPosition() { return initialPosition; }
-		GLfloat getAngle() { return angle; }
-
-		void setActive(bool value) { isActive = value; }
-		void setInitialPosition(GLfloat* value) { initialPosition = value; }
-		void setAngle(GLfloat value) { angle = value; }
-};
-
+	ammo_timeAlive[index]++;
+	if (ammo_timeAlive[index] == AMMO_MAX_TIMEALIVE)
+	{
+		ammo_timeAlive[index] = 0;
+		ammo_isActive[index] = false;
+	}
+}
 
 bool w;
 bool a;
@@ -68,6 +71,16 @@ void Reshape();
 
 void Init()
 {
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		ammo_isActive[i] = false;
+		ammo_initialPosition_x[i] = 0;
+		ammo_initialPosition_y[i] = 0;
+		ammo_initialPosition_z[i] = 0;
+		ammo_angle[i] = 0;
+		ammo_timeAlive[i] = 0;
+	}
+
 	glClearColor(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	position[0] = 0.0;
@@ -153,6 +166,21 @@ void Display()
 	glColor3f(1, 0, 0);
 	glutSolidTeapot(0.5);
 
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		if (ammo_isActive[i])
+		{
+			glLoadIdentity();
+			glColor3f(1, 0, 0);
+			GLfloat currentPosition_x = ammo_initialPosition_x[i] + ammo_timeAlive[i] * AMMO_STEP * cos(ammo_angle[i]);
+			GLfloat currentPosition_y = ammo_initialPosition_y[i];
+			GLfloat currentPosition_z = ammo_initialPosition_z[i] + ammo_timeAlive[i] * AMMO_STEP * sin(ammo_angle[i]);
+
+			glTranslatef(currentPosition_x, currentPosition_y, currentPosition_z);
+			glutSolidTeapot(0.1);
+		}
+	}
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
@@ -171,14 +199,30 @@ void Keyboard(unsigned char  key, int x, int y)
 {
 	switch (key) {
 		case 'w':	w = true;
-		break;	//
+		break;
+
 		case 'a':	a = true;
-		break;	//
+		break;
+
 		case 's':	s = true;
-		break;	//
+		break;
+
 		case 'd':	d = true;
-		break;	//
-		case ' ':
+		break;
+
+		case ' ':	for (int i = 0; i < AMMO_COUNT; i++)
+			{
+				if (!ammo_isActive[i])
+				{
+					ammo_isActive[i] = true;
+					ammo_initialPosition_x[i] = position[0];
+					ammo_initialPosition_y[i] = position[1];
+					ammo_initialPosition_z[i] = position[2];
+					ammo_angle[i] = ang;
+					ammo_timeAlive[i] = 0;
+					break;
+				}
+			}
 
 		default: break;
 	}
@@ -187,21 +231,19 @@ void KeyboardUP(unsigned char  key, int x, int y)
 {
 	switch (key)
 	{
-	case'w':
-		w = false;
-		break;
-	case 'a':
-		a = false;
-		break;
-	case 's':
-		s = false;
-		break;
-	case 'd':
-		d = false;
+		case 'w':	w = false;
 		break;
 
-	default:
+		case 'a':	a = false;
 		break;
+
+		case 's':	s = false;
+		break;
+
+		case 'd':	d = false;
+		break;
+
+		default: break;
 	}
 }
 void Movimiento(int _i)
@@ -216,7 +258,8 @@ void Movimiento(int _i)
 		position[0] += x;
 		position[1] += y;
 		position[2] += z;
-		if (isColliding(position)){
+		if (isColliding(position))
+		{
 			position[0] -= x;
 			position[1] -= y;
 			position[2] -= z;
@@ -246,6 +289,13 @@ void Movimiento(int _i)
 	if (d)
 	{
 		ang += 0.1;
+	}
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		if (ammo_isActive[i])
+		{
+			ammo_increaseTimeAlive(i);
+		}
 	}
 
 	glutTimerFunc(33, Movimiento, 0);
