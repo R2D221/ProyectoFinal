@@ -1,13 +1,11 @@
+/*** Tercera entrega proyecto final gráficas computacionales ***\
+| Arturo Torres Sánchez	A01212763
+| Erika K. Ponce Ocampo	A01126220
+| Jorge Luis Torres Esquivel	A01213890
+\************************************************************/
 
-/*Primera entrega proyecto final gráficas computacionales
- Arturo Torres Sánchez A01212763
- Erika K. Ponce Ocampo A01126220
- 
- Camera Walk
- 
- */
-
-
+#include <stdio.h>
+#include <stdlib.h>
 #ifdef _WIN32
 #include "glut.h"
 #elif __APPLE__
@@ -16,8 +14,6 @@
 
 #include <math.h>
 #include "targa.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 GLfloat ang = 0;
 GLfloat position[3];
@@ -62,15 +58,37 @@ bool a;
 bool s;
 bool d;
 
-bool isColliding(GLfloat * position)
+bool isCollidingWithWalls(GLfloat * position)
 {
     if (position[0] >= -1.0&& position[0] <= 21.0&& position[2] <= 11.5 && position[2] >= 8.5)
         return true;
-    
+
     if (position[0] <= 1.0&& position[0] >= -21.0&& position[2] >= -11.5 && position[2] <= -8.5)
         return true;
-    
+
     return false;
+}
+
+void enemyIsCollidingWithAmmo()
+{
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		if (!ammo_isActive[i]) continue;
+
+		for (int j = 0; j < numeroEnemigos; j++)
+		{
+			GLfloat distancia =	sqrt(
+					pow(enemigo_posicionInicial_X[j] - ammo_initialPosition_x[i], 2)
+					+
+					pow(enemigo_posicionInicial_Z[j] - ammo_initialPosition_z[i], 2)
+				);
+			if (distancia < 0.5)
+			{
+				enemigo_activo[j] = false;
+				ammo_isActive[i] = false;
+			}
+		}
+	}
 }
 
 
@@ -91,38 +109,38 @@ void Init()
         ammo_angle[i] = 0;
         ammo_timeAlive[i] = 0;
     }
-    
+
     int i;
-    
+
     for(i = 0; i < numeroEnemigos; i++){
-        
+
         GLfloat posicionEnemigo[3];
-        
+
         do{
             enemigo_posicionInicial_X[i] = rand() % 20 -10;
             enemigo_posicionInicial_Z[i] = rand() % 20 -10;
             enemigo_activo[i] = true;
-            
+
             posicionEnemigo[0] = enemigo_posicionInicial_X[i];
             posicionEnemigo[1] = enemigo_posicionInicial_Y[i];
             posicionEnemigo[2] = enemigo_posicionInicial_Z[i];
-            
-        }while(isColliding(posicionEnemigo));
-        
+
+        }while(isCollidingWithWalls(posicionEnemigo));
+
     }
-    
+
     glClearColor(1, 1, 1, 1);
     glEnable(GL_DEPTH_TEST);
     position[0] = 0.0;
     position[1] = 1.60;
     position[2] = 0.0;
-    
+
     //textura
     glEnable(GL_TEXTURE_2D);
     GLubyte *data;
     GLint x,y,d;
     data = LoadTGA("pasto_1.tga",&x,&y,&d);
-    
+
     glBindTexture(GL_TEXTURE_2D,1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0, GL_RGB,GL_UNSIGNED_BYTE,data);
@@ -131,7 +149,7 @@ void Init()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    
+
     //glBindTexture(GL_TEXTURE_2D,1);
     //glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     //glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);
@@ -141,19 +159,19 @@ void Init()
 void Display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     glMatrixMode(GL_PROJECTION);
-    
+
     glLoadIdentity();
-    
+
     gluPerspective(40, (float)width / height, 0.1, 50);
     gluLookAt(
               position[0], position[1], position[2],
               position[0] + distance * cos(ang), position[1], position[2] + distance * sin(ang),
               0, 1, 0);
-    
+
     glMatrixMode(GL_MODELVIEW);
-    
+
     //luces
     GLfloat light_position[] = { 0.0, 20, 0.0, 1.0 };
     GLfloat light_color[] = { 1, 1, 1, 1 };
@@ -161,7 +179,7 @@ void Display()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-    
+
     //Plano
     glEnable(GL_TEXTURE_2D);
     glLoadIdentity();
@@ -179,48 +197,48 @@ void Display()
     }
     glEnd();
     glDisable(GL_TEXTURE_2D);
-    
+
     //muros
     glLoadIdentity();
     glTranslatef(10.0, 1.0, 10.0);
     glScaled(20, 15, 1);
     glutSolidCube(1);
-    
+
     glLoadIdentity();
     glTranslatef(-10.0, 1.0, -10.0);
     glScaled(20, 15, 1);
     glutSolidCube(1);
-    
+
     // Tetera
     glLoadIdentity();
     glColor3f(1, 0, 0);
     glutSolidTeapot(0.5);
-    
+
     for (int i = 0; i < AMMO_COUNT; i++)
     {
         if (ammo_isActive[i])
         {
             glLoadIdentity();
             glColor3f(1, 0, 0);
-            GLfloat currentPosition_x = ammo_initialPosition_x[i] + ammo_timeAlive[i] * AMMO_STEP * cos(ammo_angle[i]);
-            GLfloat currentPosition_y = ammo_initialPosition_y[i];
-            GLfloat currentPosition_z = ammo_initialPosition_z[i] + ammo_timeAlive[i] * AMMO_STEP * sin(ammo_angle[i]);
-            
-            glTranslatef(currentPosition_x, currentPosition_y, currentPosition_z);
+
+			glTranslatef(ammo_initialPosition_x[i], ammo_initialPosition_y[i], ammo_initialPosition_z[i]);
             glutSolidTeapot(0.1);
         }
     }
-    
-    
-    for(int i = 0; i < numeroEnemigos; i++){
-        if(enemigo_activo[i]){
-            glLoadIdentity();
-            glColor3b(1, 0, 1);
-            glTranslated(enemigo_posicionInicial_X[i], 0, enemigo_posicionInicial_Z[i]);
-            glutSolidCube(1);
-        }
-    }
-    
+
+
+	for (int i = 0; i < numeroEnemigos; i++)
+	{
+		if (enemigo_activo[i])
+		{
+			glLoadIdentity();
+			glColor3b(1, 0, 1);
+			glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
+			glScalef(1, 2, 1);
+			glutSolidCube(1);
+		}
+	}
+
     glutSwapBuffers();
     glutPostRedisplay();
 }
@@ -240,16 +258,16 @@ void Keyboard(unsigned char  key, int x, int y)
     switch (key) {
         case 'w':	w = true;
             break;
-            
+
         case 'a':	a = true;
             break;
-            
+
         case 's':	s = true;
             break;
-            
+
         case 'd':	d = true;
             break;
-            
+
         case ' ':	for (int i = 0; i < AMMO_COUNT; i++)
         {
             if (!ammo_isActive[i])
@@ -263,7 +281,7 @@ void Keyboard(unsigned char  key, int x, int y)
                 break;
             }
         }
-            
+
         default: break;
     }
 }
@@ -273,16 +291,16 @@ void KeyboardUP(unsigned char  key, int x, int y)
     {
         case 'w':	w = false;
             break;
-            
+
         case 'a':	a = false;
             break;
-            
+
         case 's':	s = false;
             break;
-            
+
         case 'd':	d = false;
             break;
-            
+
         default: break;
     }
 }
@@ -298,7 +316,7 @@ void Movimiento(int _i)
         position[0] += x;
         position[1] += y;
         position[2] += z;
-        if (isColliding(position))
+        if (isCollidingWithWalls(position))
         {
             position[0] -= x;
             position[1] -= y;
@@ -319,7 +337,7 @@ void Movimiento(int _i)
         position[0] -= x;
         position[1] += y;
         position[2] -= z;
-        if (isColliding(position))
+        if (isCollidingWithWalls(position))
         {
             position[0] += x;
             position[1] -= y;
@@ -333,11 +351,15 @@ void Movimiento(int _i)
     for (int i = 0; i < AMMO_COUNT; i++)
     {
         if (ammo_isActive[i])
-        {
+		{
+			ammo_initialPosition_x[i] += AMMO_STEP * cos(ammo_angle[i]);
+			ammo_initialPosition_y[i] += 0;
+			ammo_initialPosition_z[i] += AMMO_STEP * sin(ammo_angle[i]);
             ammo_increaseTimeAlive(i);
         }
     }
-    
+	enemyIsCollidingWithAmmo();
+
     glutTimerFunc(33, Movimiento, 0);
 }
 
@@ -345,13 +367,14 @@ int main(int artcp, char **argv)
 {
     glutInit(&artcp, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-    glutCreateWindow("Rotating teapot");	// crear una ventana
+    glutCreateWindow("Teteras asesinas!");	// crear una ventana
     glutDisplayFunc(Display);	// callback principal
     glutReshapeFunc(Reshape);	// callback de reshape
+    glutIgnoreKeyRepeat(1);
     glutKeyboardFunc(Keyboard);
     glutKeyboardUpFunc(KeyboardUP);
     glutTimerFunc(33, Movimiento, 0);
-    
+
     Init();	// Inicializaciones
     glutMainLoop();	// loop del programa
     return 0;
