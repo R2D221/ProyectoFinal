@@ -32,14 +32,14 @@ bool a;
 bool s;
 bool d;
 
-bool isColliding(GLfloat * position){
+bool isColliding(GLfloat * position)
+{
+	if (position[0] >= -1.0&& position[0] <= 21.0&& position[2] <= 11.5 && position[2] >= 8.5)
+		return true;
 
-	if (position[0] >= -1.0&& position[0] <= 21.0&& position[2] <= 11.5 && position[2] >= 8.5){
+	if (position[0] <= 1.0&& position[0] >= -21.0&& position[2] >= -11.5 && position[2] <= -8.5)
 		return true;
-	}
-	if (position[0] <= 1.0&& position[0] >= -21.0&& position[2] >= -11.5 && position[2] <= -8.5){
-		return true;
-	}
+
 	return false;
 }
 
@@ -57,15 +57,14 @@ void Init()
 	position[0] = 0.0;
 	position[1] = 1.60;
 	position[2] = 0.0;
-    
-     //textura
-    glEnable(GL_TEXTURE_2D);
-    GLubyte * data;
-    GLint x,y,d;
-    data = LoadTGA("pasto_1.tga",&x,&y,&d);
-    
-   
-    glBindTexture(GL_TEXTURE_2D,1);
+
+		//textura
+	glEnable(GL_TEXTURE_2D);
+	GLubyte *data;
+	GLint x,y,d;
+	data = LoadTGA("pasto_1.tga",&x,&y,&d);
+
+	glBindTexture(GL_TEXTURE_2D,1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0, GL_RGB,GL_UNSIGNED_BYTE,data);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -73,26 +72,15 @@ void Init()
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    
-    
-    
-    /*glBindTexture(GL_TEXTURE_2D,1);
-    
-    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-    
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);*/
-    
-    
-    
-    
+
+	//glBindTexture(GL_TEXTURE_2D,1);
+	//glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+	//glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);
 }
 
 
 void Display()
 {
-
-
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);
@@ -108,49 +96,42 @@ void Display()
 	glMatrixMode(GL_MODELVIEW);
 
 	//luces
-
-
 	GLfloat light_position[] = { 0.0, 20, 0.0, 1.0 };
 	GLfloat light_color[] = { 1, 1, 1, 1 };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-    
-    
-    
 
 	//Plano
-    glEnable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_2D);
 	glLoadIdentity();
 	glBegin(GL_QUADS);
-	glColor3f(0, 0, 1);
-    glTexCoord2f(100, 100);
-	glVertex3f(100, 0, 100);
-    glTexCoord2f(-100, 100);
-	glVertex3f(-100, 0, 100);
-    glTexCoord2f(-100, -100);
-	glVertex3f(-100, 0, -100);
-    glTexCoord2f(100, -100);
-	glVertex3f(100, 0, -100);
+	{
+		glColor3f(0, 0, 1);
+		glTexCoord2f(100, 100);
+		glVertex3f(100, 0, 100);
+		glTexCoord2f(-100, 100);
+		glVertex3f(-100, 0, 100);
+		glTexCoord2f(-100, -100);
+		glVertex3f(-100, 0, -100);
+		glTexCoord2f(100, -100);
+		glVertex3f(100, 0, -100);
+	}
 	glEnd();
-    glDisable(GL_TEXTURE_2D);
-    
-    
-    
+	glDisable(GL_TEXTURE_2D);
+
 	//muros
 	glLoadIdentity();
 	glTranslatef(10.0, 1.0, 10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
-    
+
 	glLoadIdentity();
 	glTranslatef(-10.0, 1.0, -10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
-    
-   
-    
+
 	// Tetera
 	glLoadIdentity();
 	glColor3f(1, 0, 0);
@@ -158,20 +139,16 @@ void Display()
 
 	glutSwapBuffers();
 	glutPostRedisplay();
-
 }
 
 void Reshape(int w, int h)
 {
-
 	width = w;
 	height = h;
 	glViewport(0, 0, w, h);	//actualizar la ventana
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-1, 1, -1, 1, -10, 10);
-
-
 }
 
 void Keyboard(unsigned char  key, int x, int y)
@@ -217,7 +194,6 @@ void KeyboardUP(unsigned char  key, int x, int y)
 }
 void Movimiento(int _i)
 {
-
 	if (w)
 	{
 		float step = 0.1;
@@ -277,5 +253,4 @@ int main(int artcp, char **argv)
 	Init();	// Inicializaciones
 	glutMainLoop();	// loop del programa
 	return 0;
-
 }
