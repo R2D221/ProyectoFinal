@@ -589,6 +589,28 @@ void ShowEnemies()
             glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
             glScalef(1, 2, 1);
             glutSolidCube(1);
+
+            glScalef(1, 0.5, 1);
+
+            glDisable(GL_LIGHTING);
+            glEnable(GL_TEXTURE_2D);
+
+            glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (ENEMIGO_VIDAS_INICIAL - enemigo_vidas[i]));
+            glBegin(GL_QUADS);
+            {
+                GLfloat x1 = 0.25;
+                GLfloat x2 = 0.75;//0.4025641025641;
+                GLfloat y1 = 1;// - (0.1 * width / height);
+                GLfloat y2 = 1.16525423728814;
+                glTexCoord2f(1, 1);         glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(0, 1);         glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(0, 0);         glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(1, 0);         glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
+            }
+            glEnd();
+
+            glDisable(GL_TEXTURE_2D);
+            glEnable(GL_LIGHTING);
         }
     }
 }
@@ -628,7 +650,7 @@ void Reshape(int w, int h)
     glOrtho(-1, 1, -1, 1, -10, 10);
 }
 
-void Keyboard(unsigned char  key, int x, int y)
+void Keyboard(unsigned char     key, int x, int y)
 {
     switch (key)
     {
@@ -663,21 +685,21 @@ void Keyboard(unsigned char  key, int x, int y)
     }
 }
 
-void KeyboardUP(unsigned char  key, int x, int y)
+void KeyboardUP(unsigned char   key, int x, int y)
 {
     switch (key)
     {
         case 'w':   w = false;
-            break;
+                    break;
 
         case 'a':   a = false;
-            break;
+                    break;
 
         case 's':   s = false;
-            break;
+                    break;
 
         case 'd':   d = false;
-            break;
+                    break;
 
         default: break;
     }
