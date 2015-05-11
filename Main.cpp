@@ -15,6 +15,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "targa.h"
+#include "glm/glm.h"
 
 GLfloat ang = 0;
 GLfloat position[3];
@@ -51,13 +52,18 @@ void ammo_increaseTimeAlive(int index)
 GLfloat enemigo_posicionInicial_X[numeroEnemigos];
 GLfloat enemigo_posicionInicial_Y[numeroEnemigos];
 GLfloat enemigo_posicionInicial_Z[numeroEnemigos];
-bool enemigo_activo[numeroEnemigos];
+int enemigo_vidas[numeroEnemigos];
+#define ENEMIGO_VIDAS_INICIAL 5
 
+GLMmodel *model;
 
 bool w;
 bool a;
 bool s;
 bool d;
+
+#define JUGADOR_VIDAS_INICIAL 5
+int jugador_vidas = JUGADOR_VIDAS_INICIAL;
 
 GLfloat calculateDistance(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
@@ -83,12 +89,12 @@ void DetectEnemyCollidingWithAmmo()
 
 		for (int j = 0; j < numeroEnemigos; j++)
 		{
-			if (!enemigo_activo[j]) continue;
+			if (!enemigo_vidas[j]) continue;
 
 			GLfloat distancia = calculateDistance(ammo_initialPosition_x[i], ammo_initialPosition_z[i], enemigo_posicionInicial_X[j], enemigo_posicionInicial_Z[j]);
 			if (distancia < 1)
 			{
-				enemigo_activo[j] = false;
+				enemigo_vidas[j]--;
 				ammo_isActive[i] = false;
 				printf("Colision de bala con enemigo\n");
 			}
@@ -100,11 +106,13 @@ void DetectEnemyCollidingWithPlayer()
 {
 	for (int j = 0; j < numeroEnemigos; j++)
 	{
-		if (!enemigo_activo[j]) continue;
+		if (!enemigo_vidas[j]) continue;
 
 		GLfloat distancia = calculateDistance(position[0], position[2], enemigo_posicionInicial_X[j], enemigo_posicionInicial_Z[j]);
 		if (distancia < 1)
 		{
+			enemigo_vidas[j] = 0;
+			jugador_vidas--;
 			printf("Colision de enemigo con el jugador\n");
 		}
 	}
@@ -114,7 +122,7 @@ void MoveEnemy()
 {
 	for (int i = 0; i < numeroEnemigos; i++)
 	{
-		if (!enemigo_activo[i]) continue;
+		if (!enemigo_vidas[i]) continue;
 		if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
 
 		GLfloat enemigo_angulo =	atan2(
@@ -126,145 +134,193 @@ void MoveEnemy()
 	}
 }
 
-
-
 void Init();
 void Display();
 void Reshape();
 
-
 void Init()
 {
-    for (int i = 0; i < AMMO_COUNT; i++)
-    {
-        ammo_isActive[i] = false;
-        ammo_initialPosition_x[i] = 0;
-        ammo_initialPosition_y[i] = 0;
-        ammo_initialPosition_z[i] = 0;
-        ammo_angle[i] = 0;
-        ammo_timeAlive[i] = 0;
-    }
+	model = glmReadOBJ("onj_enemigo.obj");
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		ammo_isActive[i] = false;
+		ammo_initialPosition_x[i] = 0;
+		ammo_initialPosition_y[i] = 0;
+		ammo_initialPosition_z[i] = 0;
+		ammo_angle[i] = 0;
+		ammo_timeAlive[i] = 0;
+	}
 
-    int i;
+	int i;
 
-    for(i = 0; i < numeroEnemigos; i++){
+	for(i = 0; i < numeroEnemigos; i++){
 
-        GLfloat posicionEnemigo[3];
+		GLfloat posicionEnemigo[3];
 
-        do{
-            enemigo_posicionInicial_X[i] = rand() % 20 -10;
-            enemigo_posicionInicial_Z[i] = rand() % 20 -10;
-            enemigo_activo[i] = true;
+		do
+		{
+			enemigo_posicionInicial_X[i] = rand() % 20 -10;
+			enemigo_posicionInicial_Z[i] = rand() % 20 -10;
+			enemigo_vidas[i] = ENEMIGO_VIDAS_INICIAL;
 
-            posicionEnemigo[0] = enemigo_posicionInicial_X[i];
-            posicionEnemigo[1] = enemigo_posicionInicial_Y[i];
-            posicionEnemigo[2] = enemigo_posicionInicial_Z[i];
+			posicionEnemigo[0] = enemigo_posicionInicial_X[i];
+			posicionEnemigo[1] = enemigo_posicionInicial_Y[i];
+			posicionEnemigo[2] = enemigo_posicionInicial_Z[i];
+		}
+		while(isCollidingWithWalls(posicionEnemigo));
 
-        }while(isCollidingWithWalls(posicionEnemigo));
+	}
 
-    }
+	glClearColor(1, 1, 1, 1);
+	glEnable(GL_DEPTH_TEST);
+	position[0] = 0.0;
+	position[1] = 1.60;
+	position[2] = 0.0;
 
-    glClearColor(1, 1, 1, 1);
-    glEnable(GL_DEPTH_TEST);
-    position[0] = 0.0;
-    position[1] = 1.60;
-    position[2] = 0.0;
+	//textura
+	glEnable(GL_TEXTURE_2D);
+	GLubyte *data;
+	GLint x, y, d;
 
-    //textura
-    glEnable(GL_TEXTURE_2D);
-    GLubyte *data;
-    GLint x,y,d;
-    data = LoadTGA("pasto_1.tga",&x,&y,&d);
+	data = LoadTGA("pasto_1.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, 3);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    glBindTexture(GL_TEXTURE_2D,1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0, GL_RGB,GL_UNSIGNED_BYTE,data);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	//data = LoadTGA("corazon.tga", &x, &y, &d);
+	//glBindTexture(GL_TEXTURE_2D, 4);
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    //glBindTexture(GL_TEXTURE_2D,1);
-    //glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-    //glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,x,y,0,GL_RGB,GL_UNSIGNED_BYTE,data);
+	delete data;
 }
 
-
-void Display()
+void ShowHealthBar()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 3);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		int width = glutGet(GLUT_WINDOW_WIDTH);
+		int height = glutGet(GLUT_WINDOW_HEIGHT);
+		GLfloat x1 = 0;
+		GLfloat x2 = 0.1;
+		GLfloat y1 = 1 - (0.1 * width / height);
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
 
-    glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		int width = glutGet(GLUT_WINDOW_WIDTH);
+		int height = glutGet(GLUT_WINDOW_HEIGHT);
+		GLfloat x1 = 0.1;
+		GLfloat x2 = 0.1 + (jugador_vidas * 0.9 / JUGADOR_VIDAS_INICIAL);
+		GLfloat y1 = 1 - (0.075 * width / height);
+		GLfloat y2 = 0.975;
+		glColor3f(0, 0, 1);
+		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+	glEnable(GL_LIGHTING);
+}
+void ShowCamera()
+{
+	gluPerspective(40, (float)width / height, 0.1, 50);
+	gluLookAt(
+		position[0], position[1], position[2],
+		position[0] + distance * cos(ang), position[1], position[2] + distance * sin(ang),
+		0, 1, 0);
 
-    glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+}
+void ShowLights()
+{
+	GLfloat light_position[] = { 0.0, 20, 0.0, 1.0 };
+	GLfloat light_color[] = { 1, 1, 1, 1 };
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_LIGHT0);
+}
+void ShowFloor()
+{
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 3);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		glTexCoord2f(100, 100);
+		glVertex3f(100, 0, 100);
+		glTexCoord2f(-100, 100);
+		glVertex3f(-100, 0, 100);
+		glTexCoord2f(-100, -100);
+		glVertex3f(-100, 0, -100);
+		glTexCoord2f(100, -100);
+		glVertex3f(100, 0, -100);
+	}
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+}
+void ShowWalls()
+{
+	glLoadIdentity();
+	glTranslatef(10.0, 1.0, 10.0);
+	glScaled(20, 15, 1);
+	glutSolidCube(1);
 
-    gluPerspective(40, (float)width / height, 0.1, 50);
-    gluLookAt(
-              position[0], position[1], position[2],
-              position[0] + distance * cos(ang), position[1], position[2] + distance * sin(ang),
-              0, 1, 0);
-
-    glMatrixMode(GL_MODELVIEW);
-
-    //luces
-    GLfloat light_position[] = { 0.0, 20, 0.0, 1.0 };
-    GLfloat light_color[] = { 1, 1, 1, 1 };
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-
-    //Plano
-    glEnable(GL_TEXTURE_2D);
-    glLoadIdentity();
-    glBegin(GL_QUADS);
-    {
-        glColor3f(0, 0, 1);
-        glTexCoord2f(100, 100);
-        glVertex3f(100, 0, 100);
-        glTexCoord2f(-100, 100);
-        glVertex3f(-100, 0, 100);
-        glTexCoord2f(-100, -100);
-        glVertex3f(-100, 0, -100);
-        glTexCoord2f(100, -100);
-        glVertex3f(100, 0, -100);
-    }
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-
-    //muros
-    glLoadIdentity();
-    glTranslatef(10.0, 1.0, 10.0);
-    glScaled(20, 15, 1);
-    glutSolidCube(1);
-
-    glLoadIdentity();
-    glTranslatef(-10.0, 1.0, -10.0);
-    glScaled(20, 15, 1);
-    glutSolidCube(1);
-
-    // Tetera
-    glLoadIdentity();
-    glColor3f(1, 0, 0);
-    glutSolidTeapot(0.5);
-
-    for (int i = 0; i < AMMO_COUNT; i++)
-    {
-        if (ammo_isActive[i])
-        {
-            glLoadIdentity();
-            glColor3f(1, 0, 0);
+	glLoadIdentity();
+	glTranslatef(-10.0, 1.0, -10.0);
+	glScaled(20, 15, 1);
+	glutSolidCube(1);
+}
+void ShowTeapotForDebugging()
+{
+	glLoadIdentity();
+	glColor3f(1, 0, 0);
+	glutSolidTeapot(0.5);
+}
+void ShowAmmo()
+{
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		if (ammo_isActive[i])
+		{
+			glLoadIdentity();
+			glColor3f(1, 0, 0);
 
 			glTranslatef(ammo_initialPosition_x[i], ammo_initialPosition_y[i], ammo_initialPosition_z[i]);
-            glutSolidTeapot(0.1);
-        }
-    }
-
-
+			glutSolidTeapot(0.1);
+		}
+	}
+}
+void ShowEnemies()
+{
 	for (int i = 0; i < numeroEnemigos; i++)
 	{
-		if (enemigo_activo[i])
+		if (enemigo_vidas[i])
 		{
 			glLoadIdentity();
 			glColor3b(1, 0, 1);
@@ -273,10 +329,31 @@ void Display()
 			glutSolidCube(1);
 		}
 	}
+}
+
+void Display()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	ShowHealthBar();
+	ShowCamera();
+	ShowLights();
+	ShowFloor();
+	ShowWalls();
+	ShowTeapotForDebugging();
+	ShowAmmo();
+	ShowEnemies();
+
+	//glLoadIdentity();
+	//glTranslatef(5, 0, 0);
+	//glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
 
 	glLoadIdentity();
-    glutSwapBuffers();
-    glutPostRedisplay();
+	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 void Reshape(int w, int h)
@@ -321,6 +398,7 @@ void Keyboard(unsigned char  key, int x, int y)
         default: break;
     }
 }
+
 void KeyboardUP(unsigned char  key, int x, int y)
 {
     switch (key)
@@ -340,63 +418,64 @@ void KeyboardUP(unsigned char  key, int x, int y)
         default: break;
     }
 }
+
 void Movimiento(int _i)
 {
-    if (w)
-    {
-        float step = 0.1;
-        float x = step * cos(ang);
-        float z = step * sin(ang);
-        caminar += 1;
-        float y = (1.6 + sin(caminar)*0.05) - position[1];
-        position[0] += x;
-        position[1] += y;
-        position[2] += z;
-        if (isCollidingWithWalls(position))
-        {
-            position[0] -= x;
-            position[1] -= y;
-            position[2] -= z;
-        }
-    }
-    if (a)
-    {
-        ang -= 0.1;
-    }
-    if (s)
-    {
-        float step = 0.1;
-        float x = step * cos(ang);
-        float z = step * sin(ang);
-        caminar -= 1;
-        float y = (1.6 + sin(caminar)*0.05) - position[1];
-        position[0] -= x;
-        position[1] += y;
-        position[2] -= z;
-        if (isCollidingWithWalls(position))
-        {
-            position[0] += x;
-            position[1] -= y;
-            position[2] += z;
-        }
-    }
-    if (d)
-    {
-        ang += 0.1;
-    }
-    for (int i = 0; i < AMMO_COUNT; i++)
-    {
-        if (ammo_isActive[i])
+	if (w)
+	{
+		float step = 0.1;
+		float x = step * cos(ang);
+		float z = step * sin(ang);
+		caminar += 1;
+		float y = (1.6 + sin(caminar)*0.05) - position[1];
+		position[0] += x;
+		position[1] += y;
+		position[2] += z;
+		if (isCollidingWithWalls(position))
+		{
+			position[0] -= x;
+			position[1] -= y;
+			position[2] -= z;
+		}
+	}
+	if (a)
+	{
+		ang -= 0.1;
+	}
+	if (s)
+	{
+		float step = 0.1;
+		float x = step * cos(ang);
+		float z = step * sin(ang);
+		caminar -= 1;
+		float y = (1.6 + sin(caminar)*0.05) - position[1];
+		position[0] -= x;
+		position[1] += y;
+		position[2] -= z;
+		if (isCollidingWithWalls(position))
+		{
+			position[0] += x;
+			position[1] -= y;
+			position[2] += z;
+		}
+	}
+	if (d)
+	{
+		ang += 0.1;
+	}
+	for (int i = 0; i < AMMO_COUNT; i++)
+	{
+		if (ammo_isActive[i])
 		{
 			ammo_initialPosition_x[i] += AMMO_STEP * cos(ammo_angle[i]);
 			ammo_initialPosition_y[i] += 0;
 			ammo_initialPosition_z[i] += AMMO_STEP * sin(ammo_angle[i]);
-            ammo_increaseTimeAlive(i);
-        }
-    }
+			ammo_increaseTimeAlive(i);
+		}
+	}
 	DetectEnemyCollidingWithPlayer();
 	DetectEnemyCollidingWithAmmo();
-	MoveEnemy();
+	//MoveEnemy();
 
     glutTimerFunc(33, Movimiento, 0);
 }
