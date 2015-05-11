@@ -23,6 +23,7 @@
 #include <irrKlang.h>
 
 using namespace irrklang;
+
 ISoundEngine* engine;
 
 GLfloat ang = 0;
@@ -80,7 +81,7 @@ GLfloat calculateDistance(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
     return sqrt(pow(y2 - y1, 2) + pow(x2 - x1, 2));
 }
 
-bool isCollidingWithWalls(GLfloat * position)
+bool IsCollidingWithWalls(GLfloat * position)
 {
     if (position[0] >= -1.0&& position[0] <= 21.0&& position[2] <= 11.5 && position[2] >= 8.5)
         return true;
@@ -135,7 +136,7 @@ void DetectEnemyCollidingWithPlayer()
     }
 }
 
-void MoveEnemy()
+void MoveEnemies()
 {
     for (int i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
     {
@@ -148,6 +149,15 @@ void MoveEnemy()
                                     );
         enemigo_posicionInicial_X[i] -= cos(enemigo_angulo) * ENEMIGO_STEP;
         enemigo_posicionInicial_Z[i] -= sin(enemigo_angulo) * ENEMIGO_STEP;
+        GLfloat enemigo_posicionActual[3];
+        enemigo_posicionActual[0] = enemigo_posicionInicial_X[i];
+        enemigo_posicionActual[1] = enemigo_posicionInicial_Y[i];
+        enemigo_posicionActual[2] = enemigo_posicionInicial_Z[i];
+        if (IsCollidingWithWalls(enemigo_posicionActual))
+        {
+            enemigo_posicionInicial_X[i] += cos(enemigo_angulo) * ENEMIGO_STEP;
+            enemigo_posicionInicial_Z[i] += sin(enemigo_angulo) * ENEMIGO_STEP;
+        }
     }
 }
 
@@ -403,7 +413,7 @@ void Init()
             posicionEnemigo[1] = enemigo_posicionInicial_Y[i];
             posicionEnemigo[2] = enemigo_posicionInicial_Z[i];
         }
-        while(isCollidingWithWalls(posicionEnemigo));
+        while(IsCollidingWithWalls(posicionEnemigo));
 
     }
 
@@ -441,7 +451,7 @@ void ShowStatusBar()
     }
     glEnd();
 
-    glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (JUGADOR_VIDAS_INICIAL - jugador_vidas > 0 ? jugador_vidas : 1));
+    glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (JUGADOR_VIDAS_INICIAL - (jugador_vidas > 0 ? jugador_vidas : 1)));
     glLoadIdentity();
     glBegin(GL_QUADS);
     {
@@ -517,8 +527,8 @@ void ShowCamera()
 }
 void ShowLights()
 {
-    GLfloat light_position[] = { 0.0, 20, 0.0, 1.0 };
-    GLfloat light_color[] = { 1, 1, 1, 1 };
+    GLfloat light_position[] = { 1, 1, 1, 0 };
+    GLfloat light_color[] = { 1, 1, 1 };
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
     glEnable(GL_LIGHTING);
@@ -602,10 +612,10 @@ void ShowEnemies()
                 GLfloat x2 = 0.75;//0.4025641025641;
                 GLfloat y1 = 1;// - (0.1 * width / height);
                 GLfloat y2 = 1.16525423728814;
-                glTexCoord2f(1, 1);         glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
-                glTexCoord2f(0, 1);         glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
-                glTexCoord2f(0, 0);         glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
-                glTexCoord2f(1, 0);         glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(1, 1);     glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(0, 1);     glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(0, 0);     glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
+                glTexCoord2f(1, 0);     glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y1 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
             }
             glEnd();
 
@@ -717,7 +727,7 @@ void Movimiento(int _i)
         position[0] += x;
         position[1] += y;
         position[2] += z;
-        if (isCollidingWithWalls(position))
+        if (IsCollidingWithWalls(position))
         {
             position[0] -= x;
             position[1] -= y;
@@ -738,7 +748,7 @@ void Movimiento(int _i)
         position[0] -= x;
         position[1] += y;
         position[2] -= z;
-        if (isCollidingWithWalls(position))
+        if (IsCollidingWithWalls(position))
         {
             position[0] += x;
             position[1] -= y;
@@ -761,7 +771,7 @@ void Movimiento(int _i)
     }
     DetectEnemyCollidingWithPlayer();
     DetectEnemyCollidingWithAmmo();
-    //MoveEnemy();
+    //MoveEnemies();
 
     glutTimerFunc(33, Movimiento, 0);
 }
