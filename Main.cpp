@@ -4,8 +4,12 @@
 | Jorge Luis Torres Esquivel	A01213890
 \************************************************************/
 
+//youlose.wav: https://www.freesound.org/people/noirenex/sounds/159408/
+//youwin.wav: https://www.freesound.org/people/Tuudurt/sounds/258142/
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef _WIN32
 #include "glut.h"
 #elif __APPLE__
@@ -16,6 +20,10 @@
 #include <math.h>
 #include "targa.h"
 #include "glm/glm.h"
+#include <irrKlang.h>
+
+using namespace irrklang;
+ISoundEngine* engine;
 
 GLfloat ang = 0;
 GLfloat position[3];
@@ -29,8 +37,11 @@ GLfloat caminar;
 #define AMMO_STEP 1
 #define AMMO_COUNT 100
 
-#define numeroEnemigos 10
+#define ENEMIGO_CUENTA_INICIAL 10
 #define ENEMIGO_STEP 0.025
+#define ENEMIGO_VIDAS_INICIAL 5
+
+int enemigosVivos = ENEMIGO_CUENTA_INICIAL;
 
 bool ammo_isActive[AMMO_COUNT];
 GLfloat ammo_initialPosition_x[AMMO_COUNT];
@@ -38,7 +49,6 @@ GLfloat ammo_initialPosition_y[AMMO_COUNT];
 GLfloat ammo_initialPosition_z[AMMO_COUNT];
 GLfloat ammo_angle[AMMO_COUNT];
 int ammo_timeAlive[AMMO_COUNT];
-
 void ammo_increaseTimeAlive(int index)
 {
     ammo_timeAlive[index]++;
@@ -49,11 +59,11 @@ void ammo_increaseTimeAlive(int index)
     }
 }
 
-GLfloat enemigo_posicionInicial_X[numeroEnemigos];
-GLfloat enemigo_posicionInicial_Y[numeroEnemigos];
-GLfloat enemigo_posicionInicial_Z[numeroEnemigos];
-int enemigo_vidas[numeroEnemigos];
-#define ENEMIGO_VIDAS_INICIAL 5
+
+GLfloat enemigo_posicionInicial_X[ENEMIGO_CUENTA_INICIAL];
+GLfloat enemigo_posicionInicial_Y[ENEMIGO_CUENTA_INICIAL];
+GLfloat enemigo_posicionInicial_Z[ENEMIGO_CUENTA_INICIAL];
+int enemigo_vidas[ENEMIGO_CUENTA_INICIAL];
 
 GLMmodel *model;
 
@@ -87,7 +97,7 @@ void DetectEnemyCollidingWithAmmo()
 	{
 		if (!ammo_isActive[i]) continue;
 
-		for (int j = 0; j < numeroEnemigos; j++)
+		for (int j = 0; j < ENEMIGO_CUENTA_INICIAL; j++)
 		{
 			if (!enemigo_vidas[j]) continue;
 
@@ -95,7 +105,12 @@ void DetectEnemyCollidingWithAmmo()
 			if (distancia < 1)
 			{
 				enemigo_vidas[j]--;
+				if (!enemigo_vidas[j])
+				{
+					enemigosVivos--;
+				}
 				ammo_isActive[i] = false;
+				engine->play2D("hit_enemy.wav", false);	//https://www.freesound.org/people/TheyCallMeCaudex/sounds/266148/
 				printf("Colision de bala con enemigo\n");
 			}
 		}
@@ -104,7 +119,7 @@ void DetectEnemyCollidingWithAmmo()
 
 void DetectEnemyCollidingWithPlayer()
 {
-	for (int j = 0; j < numeroEnemigos; j++)
+	for (int j = 0; j < ENEMIGO_CUENTA_INICIAL; j++)
 	{
 		if (!enemigo_vidas[j]) continue;
 
@@ -112,7 +127,9 @@ void DetectEnemyCollidingWithPlayer()
 		if (distancia < 1)
 		{
 			enemigo_vidas[j] = 0;
+			enemigosVivos--;
 			jugador_vidas--;
+			engine->play2D("hit_player.wav", false);	//https://www.freesound.org/people/LittleRobotSoundFactory/sounds/270311/
 			printf("Colision de enemigo con el jugador\n");
 		}
 	}
@@ -120,7 +137,7 @@ void DetectEnemyCollidingWithPlayer()
 
 void MoveEnemy()
 {
-	for (int i = 0; i < numeroEnemigos; i++)
+	for (int i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
 	{
 		if (!enemigo_vidas[i]) continue;
 		if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
@@ -138,9 +155,228 @@ void Init();
 void Display();
 void Reshape();
 
+void PlayMusic()
+{
+	//Music by Eric Skiff
+	//http://ericskiff.com/music/
+	engine->play2D("music.wav", true);
+}
+
+#define TEXTURE_GRASS	3
+#define TEXTURE_HEART	4
+#define TEXTURE_LIFE_5	6
+#define TEXTURE_LIFE_4	7
+#define TEXTURE_LIFE_3	8
+#define TEXTURE_LIFE_2	9
+#define TEXTURE_LIFE_1	10
+#define TEXTURE_NUMBER_0	11
+#define TEXTURE_NUMBER_1	12
+#define TEXTURE_NUMBER_2	13
+#define TEXTURE_NUMBER_3	14
+#define TEXTURE_NUMBER_4	15
+#define TEXTURE_NUMBER_5	16
+#define TEXTURE_NUMBER_6	17
+#define TEXTURE_NUMBER_7	18
+#define TEXTURE_NUMBER_8	19
+#define TEXTURE_NUMBER_9	20
+#define TEXTURE_ENEMIES	21
+
+void LoadTextures()
+{
+	glEnable(GL_TEXTURE_2D);
+	GLubyte *data;
+	GLint x, y, d;
+
+	data = LoadTGA("pasto_1.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_GRASS);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("Corazon.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_HEART);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("vida_5.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("vida_4.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_4);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("vida_3.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_3);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("vida_2.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_2);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("vida_1.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("0.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_0);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("1.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("2.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_2);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("3.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_3);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("4.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_4);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("5.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_5);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("6.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_6);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("7.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_7);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("8.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_8);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("9.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_9);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	data = LoadTGA("enemigos.tga", &x, &y, &d);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_ENEMIES);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	delete data;
+}
+
 void Init()
 {
+	engine = createIrrKlangDevice();
 	model = glmReadOBJ("onj_enemigo.obj");
+
+	PlayMusic();
+
 	for (int i = 0; i < AMMO_COUNT; i++)
 	{
 		ammo_isActive[i] = false;
@@ -153,8 +389,8 @@ void Init()
 
 	int i;
 
-	for(i = 0; i < numeroEnemigos; i++){
-
+	for(i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
+	{
 		GLfloat posicionEnemigo[3];
 
 		do
@@ -177,39 +413,18 @@ void Init()
 	position[1] = 1.60;
 	position[2] = 0.0;
 
-	//textura
-	glEnable(GL_TEXTURE_2D);
-	GLubyte *data;
-	GLint x, y, d;
-
-	data = LoadTGA("pasto_1.tga", &x, &y, &d);
-	glBindTexture(GL_TEXTURE_2D, 3);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	//data = LoadTGA("corazon.tga", &x, &y, &d);
-	//glBindTexture(GL_TEXTURE_2D, 4);
-	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-	delete data;
+	LoadTextures();
 }
 
-void ShowHealthBar()
+void ShowStatusBar()
 {
+	int width = glutGet(GLUT_WINDOW_WIDTH);
+	int height = glutGet(GLUT_WINDOW_HEIGHT);
+
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 3);
+
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_HEART);
 	glLoadIdentity();
 	glBegin(GL_QUADS);
 	{
@@ -225,28 +440,73 @@ void ShowHealthBar()
 		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
 	}
 	glEnd();
-	glDisable(GL_TEXTURE_2D);
 
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (JUGADOR_VIDAS_INICIAL - jugador_vidas > 0 ? jugador_vidas : 1));
 	glLoadIdentity();
 	glBegin(GL_QUADS);
 	{
-		int width = glutGet(GLUT_WINDOW_WIDTH);
-		int height = glutGet(GLUT_WINDOW_HEIGHT);
 		GLfloat x1 = 0.1;
-		GLfloat x2 = 0.1 + (jugador_vidas * 0.9 / JUGADOR_VIDAS_INICIAL);
-		GLfloat y1 = 1 - (0.075 * width / height);
-		GLfloat y2 = 0.975;
-		glColor3f(0, 0, 1);
-		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
-		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
-		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
-		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+		GLfloat x2 = 0.4025641025641;
+		GLfloat y1 = 1 - (0.1 * width / height);
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
 	}
 	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_0 + enemigosVivos / 10);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		GLfloat x1 = 0.9;
+		GLfloat x2 = 0.95;
+		GLfloat y1 = 1 - (0.05 * width / height);
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_NUMBER_0 + enemigosVivos % 10);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		GLfloat x1 = 0.95;
+		GLfloat x2 = 1;
+		GLfloat y1 = 1 - (0.05 * width / height);
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_ENEMIES);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		GLfloat x1 = 0.9 - 0.21392405063291;
+		GLfloat x2 = 0.9;
+		GLfloat y1 = 1 - (0.05 * width / height);
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);		glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);		glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);		glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);		glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+
+	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 }
 void ShowCamera()
 {
+	glLoadIdentity();
 	gluPerspective(40, (float)width / height, 0.1, 50);
 	gluLookAt(
 		position[0], position[1], position[2],
@@ -268,7 +528,7 @@ void ShowLights()
 void ShowFloor()
 {
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 3);
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_GRASS);
 	glLoadIdentity();
 	glBegin(GL_QUADS);
 	{
@@ -287,11 +547,13 @@ void ShowFloor()
 void ShowWalls()
 {
 	glLoadIdentity();
+	glColor3f(0, 0.5, 0.5);
 	glTranslatef(10.0, 1.0, 10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
 
 	glLoadIdentity();
+	glColor3f(0, 0.5, 0.5);
 	glTranslatef(-10.0, 1.0, -10.0);
 	glScaled(20, 15, 1);
 	glutSolidCube(1);
@@ -318,12 +580,12 @@ void ShowAmmo()
 }
 void ShowEnemies()
 {
-	for (int i = 0; i < numeroEnemigos; i++)
+	for (int i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
 	{
 		if (enemigo_vidas[i])
 		{
 			glLoadIdentity();
-			glColor3b(1, 0, 1);
+			glColor3f(1, 0, 1);
 			glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
 			glScalef(1, 2, 1);
 			glutSolidCube(1);
@@ -338,7 +600,7 @@ void Display()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	ShowHealthBar();
+	ShowStatusBar();
 	ShowCamera();
 	ShowLights();
 	ShowFloor();
@@ -368,35 +630,37 @@ void Reshape(int w, int h)
 
 void Keyboard(unsigned char  key, int x, int y)
 {
-    switch (key) {
-        case 'w':	w = true;
-            break;
+	switch (key)
+	{
+		case 'w':	w = true;
+			break;
 
-        case 'a':	a = true;
-            break;
+		case 'a':	a = true;
+			break;
 
-        case 's':	s = true;
-            break;
+		case 's':	s = true;
+			break;
 
-        case 'd':	d = true;
-            break;
+		case 'd':	d = true;
+			break;
 
-        case ' ':	for (int i = 0; i < AMMO_COUNT; i++)
-        {
-            if (!ammo_isActive[i])
-            {
-                ammo_isActive[i] = true;
-                ammo_initialPosition_x[i] = position[0];
-                ammo_initialPosition_y[i] = position[1];
-                ammo_initialPosition_z[i] = position[2];
-                ammo_angle[i] = ang;
-                ammo_timeAlive[i] = 0;
-                break;
-            }
-        }
+		case ' ':	for (int i = 0; i < AMMO_COUNT; i++)
+			{
+				if (!ammo_isActive[i])
+				{
+					ammo_isActive[i] = true;
+					ammo_initialPosition_x[i] = position[0];
+					ammo_initialPosition_y[i] = position[1];
+					ammo_initialPosition_z[i] = position[2];
+					ammo_angle[i] = ang;
+					ammo_timeAlive[i] = 0;
+					engine->play2D("shoot.wav", false);	//https://www.freesound.org/people/Quonux/sounds/166418/
+					break;
+				}
+			}
 
-        default: break;
-    }
+		default: break;
+	}
 }
 
 void KeyboardUP(unsigned char  key, int x, int y)
