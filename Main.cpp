@@ -447,8 +447,12 @@ void LoadTextures()
 void Init()
 {
     engine = createIrrKlangDevice();
-    //model = glmReadOBJ("creeper/Creeper_01.obj");
     //model = glmReadOBJ("test.obj");
+    //model = glmReadOBJ("creeper/Creeper_tringulado.obj");
+    //model = glmReadOBJ("creeper/minion_triangulado.obj");
+    //glmFacetNormals(model);
+    //glmVertexNormals(model, 90.0, false);
+    //glmScale(model, 0.25);
 
     PlayMusic();
 
@@ -867,9 +871,10 @@ void Display()
 
 
     glLoadIdentity();
-    glTranslatef(-5, 0, 0);
+    //glTranslatef(-5, 0, 0);
     glDisable(GL_BLEND);
     glColor4f(1, 1, 1, 1);
+    //glScalef(0.25, 0.25, 0.25);
     //glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
     glColor4f(1, 1, 1, 1);
 
