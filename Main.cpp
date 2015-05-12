@@ -474,12 +474,8 @@ void LoadTextures()
 void Init()
 {
     engine = createIrrKlangDevice();
-    //model = glmReadOBJ("test.obj");
-    //model = glmReadOBJ("creeper/Creeper_tringulado.obj");
-    //model = glmReadOBJ("creeper/minion_triangulado.obj");
-    //glmFacetNormals(model);
-    //glmVertexNormals(model, 90.0, false);
-    //glmScale(model, 0.25);
+    model = glmReadOBJ("creeper/cREEPER_INTENTO3.obj");
+    glmScale(model, 0.5);
 
     PlayMusic();
 
@@ -513,7 +509,6 @@ void Init()
 
     }
 
-    //glClearColor(1, 1, 1, 1);
     glClearColor(0x22 / 256.0, 0x44 / 256.0, 0x77 / 256.0, 1);
     glEnable(GL_DEPTH_TEST);
     position[0] = 0.0;
@@ -754,18 +749,15 @@ void ShowEnemies()
         {
             glLoadIdentity();
             glColor3f(1, 0, 1);
-            glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
-            glScalef(1, 2, 1);
-            glRotatef(-enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
-            glutSolidCube(1);
-            glRotatef(enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
-            glScalef(1, 0.5, 1);
+            glTranslated(enemigo_posicionInicial_X[i], 0, enemigo_posicionInicial_Z[i]);
+            glRotatef(180 - enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
+            glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+            glRotatef(-(180 - enemigo_angulo[i] * 180 / M_PI), 0, 1, 0);
 
             glDisable(GL_LIGHTING);
 
             //Sombra
             glColor4f(0, 0, 0, 0.5);
-            glTranslatef(0, -1, 0);
             glScalef(sqrt(2.0), 0.02, sqrt(2.0));
             glRotatef(45, 0, 1, 0);
             glTranslatef(0, 0, -1);
@@ -775,18 +767,18 @@ void ShowEnemies()
             glTranslatef(0, 0, 1);
             glRotatef(-45, 0, 1, 0);
             glScalef(1 / sqrt(2.0), 50, 1 / sqrt(2.0));
-            glTranslatef(0, 1, 0);
             glColor4f(1, 1, 1, 1);
 
             glEnable(GL_TEXTURE_2D);
 
             //Barra de vida
+            glTranslatef(0, 1.2, 0);
             glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (ENEMIGO_VIDAS_INICIAL - enemigo_vidas[i]));
             glBegin(GL_QUADS);
             {
                 GLfloat x1 = 0.25;
-                GLfloat x2 = 0.75;//0.4025641025641;
-                GLfloat y1 = 1;// - (0.1 * width / height);
+                GLfloat x2 = 0.75;
+                GLfloat y1 = 1;
                 GLfloat y2 = 1.16525423728814;
                 glTexCoord2f(1, 1);     glVertex3f((x2 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x2 * 2 - 1) * sin(ang + M_PI_2));
                 glTexCoord2f(0, 1);     glVertex3f((x1 * 2 - 1) * cos(ang + M_PI_2), y2 * 2 - 1, (x1 * 2 - 1) * sin(ang + M_PI_2));
@@ -943,17 +935,8 @@ void Display()
             ShowFloor();
             ShowCeiling();
             ShowWalls();
-            //ShowTeapotForDebugging();
             ShowAmmo();
             ShowEnemies();
-
-            glLoadIdentity();
-            //glTranslatef(-5, 0, 0);
-            glDisable(GL_BLEND);
-            glColor4f(1, 1, 1, 1);
-            //glScalef(0.25, 0.25, 0.25);
-            //glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
-            glColor4f(1, 1, 1, 1);
 
             break;
         }
@@ -968,7 +951,7 @@ void Reshape(int w, int h)
 {
     width = w;
     height = h;
-    glViewport(0, 0, w, h);     //actualizar la ventana
+    glViewport(0, 0, w, h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1, 1, -1, 1, -10, 10);
