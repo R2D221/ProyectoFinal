@@ -75,7 +75,8 @@ bool d;
 int jugador_vidas = JUGADOR_VIDAS_INICIAL;
 
 #define TEXTURE_GRASS           3
-#define TEXTURE_HEART           4
+#define TEXTURE_CLOUDS          4
+#define TEXTURE_HEART           5
 #define TEXTURE_LIFE_5          6
 #define TEXTURE_LIFE_4          7
 #define TEXTURE_LIFE_3          8
@@ -106,7 +107,6 @@ int jugador_vidas = JUGADOR_VIDAS_INICIAL;
 
 int seccion = PANTALLA_INICIO;
 int control = TEXTURE_INICIOA;
-//int accion = 0;
 bool inicio = true;
 
 GLfloat calculateDistance(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
@@ -230,6 +230,16 @@ void LoadTextures()
 
     data = LoadTGA("pasto_2.tga", &x, &y, &d);
     glBindTexture(GL_TEXTURE_2D, TEXTURE_GRASS);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    data = LoadTGA("nubes.tga", &x, &y, &d);
+    glBindTexture(GL_TEXTURE_2D, TEXTURE_CLOUDS);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -503,7 +513,8 @@ void Init()
 
     }
 
-    glClearColor(1, 1, 1, 1);
+    //glClearColor(1, 1, 1, 1);
+    glClearColor(0x22 / 256.0, 0x44 / 256.0, 0x77 / 256.0, 1);
     glEnable(GL_DEPTH_TEST);
     position[0] = 0.0;
     position[1] = 1.60;
@@ -639,14 +650,25 @@ void ShowFloor()
     glLoadIdentity();
     glBegin(GL_QUADS);
     {
-        glTexCoord2f(100, 100);
-        glVertex3f(100, 0, 100);
-        glTexCoord2f(-100, 100);
-        glVertex3f(-100, 0, 100);
-        glTexCoord2f(-100, -100);
-        glVertex3f(-100, 0, -100);
-        glTexCoord2f(100, -100);
-        glVertex3f(100, 0, -100);
+        glTexCoord2f(25     , 25    );  glVertex3f(100      , 0,    100     );
+        glTexCoord2f(-25    , 25    );  glVertex3f(-100     , 0,    100     );
+        glTexCoord2f(-25    , -25   );  glVertex3f(-100     , 0,    -100    );
+        glTexCoord2f(25     , -25   );  glVertex3f(100      , 0,    -100    );
+    }
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+}
+void ShowCeiling()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, TEXTURE_CLOUDS);
+    glLoadIdentity();
+    glBegin(GL_QUADS);
+    {
+        glTexCoord2f(5      , 5     );  glVertex3f(100      , 8.5,  100     );
+        glTexCoord2f(-5     , 5     );  glVertex3f(-100     , 8.5,  100     );
+        glTexCoord2f(-5     , -5    );  glVertex3f(-100     , 8.5,  -100    );
+        glTexCoord2f(5      , -5    );  glVertex3f(100      , 8.5,  -100    );
     }
     glEnd();
     glDisable(GL_TEXTURE_2D);
@@ -919,6 +941,7 @@ void Display()
             ShowCamera();
             ShowLights();
             ShowFloor();
+            ShowCeiling();
             ShowWalls();
             //ShowTeapotForDebugging();
             ShowAmmo();
