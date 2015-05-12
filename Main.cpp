@@ -1,4 +1,4 @@
-/*** Tercera entrega proyecto final gráficas computacionales ***\
+/*** Proyecto final gráficas computacionales ***\
 | Arturo Torres Sánchez         A01212763
 | Erika K. Ponce Ocampo         A01126220
 | Jorge Luis Torres Esquivel    A01213890
@@ -31,7 +31,7 @@ GLint width = 300;
 GLint height = 300;
 GLfloat caminar;
 
-#define AMMO_MAX_TIMEALIVE 100
+#define AMMO_MAX_TIMEALIVE 30
 #define AMMO_STEP 1
 #define AMMO_COUNT 100
 
@@ -228,7 +228,7 @@ void LoadTextures()
     GLubyte *data;
     GLint x, y, d;
 
-    data = LoadTGA("pasto_1.tga", &x, &y, &d);
+    data = LoadTGA("pasto_2.tga", &x, &y, &d);
     glBindTexture(GL_TEXTURE_2D, TEXTURE_GRASS);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -613,15 +613,24 @@ void ShowCamera()
 }
 void ShowLights()
 {
-    GLfloat light_position[] = { 1, 1, 1, 0 };
-    GLfloat light_color[] = { 0.5, 0.5, 0.5 };
-    GLfloat light_color_ambient[] = { 0.5, 0.5, 0.5 };
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_color_ambient);
+    GLfloat light_position_0[] = { 1, 1, 1, 0 };
+    GLfloat light_position_1[] = { -1, 1, 1, 0 };
+    GLfloat light_position_2[] = { 0, 1, 1, 0 };
+    GLfloat light_color_0[] = { 0.5, 0.5, 0.5 };
+    GLfloat light_color_1[] = { 0.1, 0.1, 0.1 };
+    GLfloat light_color_2[] = { 0.1, 0.1, 0.1 };
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position_0);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color_0);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_color_0);
+
+    glLightfv(GL_LIGHT1, GL_POSITION, light_position_1);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_color_1);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, light_color_1);
+
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
 }
 void ShowFloor()
 {
@@ -646,14 +655,14 @@ void ShowWalls()
 {
     //Muro 1
     glLoadIdentity();
-    glColor3f(0, 0.5, 0.5);
+    glColor3b(0x38, 0x28, 0x18);
     glTranslatef(10.0, 1.0, 10.0);
     glScalef(20, 15, 1);
     glutSolidCube(1);
 
     //Muro 2
     glLoadIdentity();
-    glColor3f(0, 0.5, 0.5);
+    glColor3b(0x38, 0x28, 0x18);
     glTranslatef(-10.0, 1.0, -10.0);
     glScalef(20, 15, 1);
     glutSolidCube(1);
@@ -707,10 +716,11 @@ void ShowAmmo()
         if (ammo_isActive[i])
         {
             glLoadIdentity();
-            glColor3f(1, 0, 0);
+            glColor3f(0.1, 0.1, 0.1);
 
             glTranslatef(ammo_initialPosition_x[i], ammo_initialPosition_y[i], ammo_initialPosition_z[i]);
-            glutSolidTeapot(0.1);
+            glRotatef(90 - ammo_angle[i] * 180 / M_PI, 0, 1, 0);
+            glutSolidTeapot(0.025);
         }
     }
 }
@@ -910,7 +920,7 @@ void Display()
             ShowLights();
             ShowFloor();
             ShowWalls();
-            ShowTeapotForDebugging();
+            //ShowTeapotForDebugging();
             ShowAmmo();
             ShowEnemies();
 
