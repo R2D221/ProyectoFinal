@@ -64,6 +64,7 @@ void ammo_increaseTimeAlive(int index)
 GLfloat enemigo_posicionInicial_X[ENEMIGO_CUENTA_INICIAL];
 GLfloat enemigo_posicionInicial_Y[ENEMIGO_CUENTA_INICIAL];
 GLfloat enemigo_posicionInicial_Z[ENEMIGO_CUENTA_INICIAL];
+GLfloat enemigo_angulo[ENEMIGO_CUENTA_INICIAL];
 int enemigo_vidas[ENEMIGO_CUENTA_INICIAL];
 
 GLMmodel *model;
@@ -141,22 +142,25 @@ void MoveEnemies()
     for (int i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
     {
         if (!enemigo_vidas[i]) continue;
-        if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
 
-        GLfloat enemigo_angulo =    atan2(
-                                        (enemigo_posicionInicial_Z[i] - position[2]),
-                                        (enemigo_posicionInicial_X[i] - position[0])
-                                    );
-        enemigo_posicionInicial_X[i] -= cos(enemigo_angulo) * ENEMIGO_STEP;
-        enemigo_posicionInicial_Z[i] -= sin(enemigo_angulo) * ENEMIGO_STEP;
+        GLfloat este_enemigo_angulo =   atan2(
+                                            (enemigo_posicionInicial_Z[i] - position[2]),
+                                            (enemigo_posicionInicial_X[i] - position[0])
+                                        );
+
+        enemigo_angulo[i] = este_enemigo_angulo;
+        if (true) continue;
+        if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
+        enemigo_posicionInicial_X[i] -= cos(este_enemigo_angulo) * ENEMIGO_STEP;
+        enemigo_posicionInicial_Z[i] -= sin(este_enemigo_angulo) * ENEMIGO_STEP;
         GLfloat enemigo_posicionActual[3];
         enemigo_posicionActual[0] = enemigo_posicionInicial_X[i];
         enemigo_posicionActual[1] = enemigo_posicionInicial_Y[i];
         enemigo_posicionActual[2] = enemigo_posicionInicial_Z[i];
         if (IsCollidingWithWalls(enemigo_posicionActual))
         {
-            enemigo_posicionInicial_X[i] += cos(enemigo_angulo) * ENEMIGO_STEP;
-            enemigo_posicionInicial_Z[i] += sin(enemigo_angulo) * ENEMIGO_STEP;
+            enemigo_posicionInicial_X[i] += cos(este_enemigo_angulo) * ENEMIGO_STEP;
+            enemigo_posicionInicial_Z[i] += sin(este_enemigo_angulo) * ENEMIGO_STEP;
         }
     }
 }
@@ -174,22 +178,22 @@ void PlayMusic()
 
 #define TEXTURE_GRASS       3
 #define TEXTURE_HEART       4
-#define TEXTURE_LIFE_5      6
-#define TEXTURE_LIFE_4      7
-#define TEXTURE_LIFE_3      8
-#define TEXTURE_LIFE_2      9
-#define TEXTURE_LIFE_1      10
-#define TEXTURE_NUMBER_0    11
-#define TEXTURE_NUMBER_1    12
-#define TEXTURE_NUMBER_2    13
-#define TEXTURE_NUMBER_3    14
-#define TEXTURE_NUMBER_4    15
-#define TEXTURE_NUMBER_5    16
-#define TEXTURE_NUMBER_6    17
-#define TEXTURE_NUMBER_7    18
-#define TEXTURE_NUMBER_8    19
-#define TEXTURE_NUMBER_9    20
-#define TEXTURE_ENEMIES     21
+#define TEXTURE_LIFE_5      5
+#define TEXTURE_LIFE_4      6
+#define TEXTURE_LIFE_3      7
+#define TEXTURE_LIFE_2      8
+#define TEXTURE_LIFE_1      9
+#define TEXTURE_NUMBER_0    10
+#define TEXTURE_NUMBER_1    11
+#define TEXTURE_NUMBER_2    12
+#define TEXTURE_NUMBER_3    13
+#define TEXTURE_NUMBER_4    14
+#define TEXTURE_NUMBER_5    15
+#define TEXTURE_NUMBER_6    16
+#define TEXTURE_NUMBER_7    17
+#define TEXTURE_NUMBER_8    18
+#define TEXTURE_NUMBER_9    19
+#define TEXTURE_ENEMIES     20
 
 void LoadTextures()
 {
@@ -383,7 +387,8 @@ void LoadTextures()
 void Init()
 {
     engine = createIrrKlangDevice();
-    model = glmReadOBJ("onj_enemigo.obj");
+    //model = glmReadOBJ("creeper/Creeper_01.obj");
+    //model = glmReadOBJ("test.obj");
 
     PlayMusic();
 
@@ -528,9 +533,11 @@ void ShowCamera()
 void ShowLights()
 {
     GLfloat light_position[] = { 1, 1, 1, 0 };
-    GLfloat light_color[] = { 1, 1, 1 };
+    GLfloat light_color[] = { 0.5, 0.5, 0.5 };
+    GLfloat light_color_ambient[] = { 0.5, 0.5, 0.5 };
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_color_ambient);
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHT0);
@@ -574,7 +581,7 @@ void ShowWalls()
     //Sombra 1
     {
         glLoadIdentity();
-        glColor3f(0.2, 0.2, 0.2);
+        glColor4f(0, 0, 0, 0.5);
         glTranslatef(5.75, 0, 5.75);
         glRotatef(-90, 1, 0, 0);
         glScalef(20, 8.5, 0.01);
@@ -591,7 +598,7 @@ void ShowWalls()
     //Sombra 2
     {
         glLoadIdentity();
-        glColor3f(0.2, 0.2, 0.2);
+        glColor4f(0, 0, 0, 0.5);
         glTranslatef(-14.25, 0, -14.25);
         glRotatef(-90, 1, 0, 0);
         glScalef(20, 8.5, 0.01);
@@ -636,15 +643,17 @@ void ShowEnemies()
             glColor3f(1, 0, 1);
             glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
             glScalef(1, 2, 1);
+            glRotatef(-enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
             glutSolidCube(1);
+            glRotatef(enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
             glScalef(1, 0.5, 1);
 
             glDisable(GL_LIGHTING);
 
             //Sombra
-            glColor3f(0.2, 0.2, 0.2);
+            glColor4f(0, 0, 0, 0.5);
             glTranslatef(0, -1, 0);
-            glScalef(sqrt(2.0), 0.01, sqrt(2.0));
+            glScalef(sqrt(2.0), 0.02, sqrt(2.0));
             glRotatef(45, 0, 1, 0);
             glTranslatef(0, 0, -1);
             glScalef(1, 1, 2);
@@ -652,8 +661,9 @@ void ShowEnemies()
             glScalef(1, 1, 0.5);
             glTranslatef(0, 0, 1);
             glRotatef(-45, 0, 1, 0);
-            glScalef(1 / sqrt(2.0), 100, 1 / sqrt(2.0));
+            glScalef(1 / sqrt(2.0), 50, 1 / sqrt(2.0));
             glTranslatef(0, 1, 0);
+            glColor4f(1, 1, 1, 1);
 
             glEnable(GL_TEXTURE_2D);
 
@@ -684,6 +694,9 @@ void Display()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glColor4f(1, 1, 1, 1);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
     ShowStatusBar();
     ShowCamera();
@@ -694,9 +707,12 @@ void Display()
     ShowAmmo();
     ShowEnemies();
 
-    //glLoadIdentity();
-    //glTranslatef(5, 0, 0);
+    glLoadIdentity();
+    glTranslatef(-5, 0, 0);
+    glDisable(GL_BLEND);
+    glColor4f(1, 1, 1, 1);
     //glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+    glColor4f(1, 1, 1, 1);
 
     glLoadIdentity();
     glutSwapBuffers();
@@ -824,7 +840,7 @@ void Movimiento(int _i)
     }
     DetectEnemyCollidingWithPlayer();
     DetectEnemyCollidingWithAmmo();
-    //MoveEnemies();
+    MoveEnemies();
 
     glutTimerFunc(33, Movimiento, 0);
 }
