@@ -26,7 +26,7 @@ using namespace irrklang;
 
 ISoundEngine* engine;
 
-GLfloat ang = 0;
+GLfloat ang = M_PI;
 GLfloat position[3];
 GLfloat distance = 5;
 
@@ -556,17 +556,55 @@ void ShowFloor()
 }
 void ShowWalls()
 {
+    //Muro 1
     glLoadIdentity();
     glColor3f(0, 0.5, 0.5);
     glTranslatef(10.0, 1.0, 10.0);
-    glScaled(20, 15, 1);
+    glScalef(20, 15, 1);
     glutSolidCube(1);
 
+    //Muro 2
     glLoadIdentity();
     glColor3f(0, 0.5, 0.5);
     glTranslatef(-10.0, 1.0, -10.0);
-    glScaled(20, 15, 1);
+    glScalef(20, 15, 1);
     glutSolidCube(1);
+
+    glDisable(GL_LIGHTING);
+    //Sombra 1
+    {
+        glLoadIdentity();
+        glColor3f(0.2, 0.2, 0.2);
+        glTranslatef(5.75, 0, 5.75);
+        glRotatef(-90, 1, 0, 0);
+        glScalef(20, 8.5, 0.01);
+        GLfloat Kx = -8.5/20;
+        GLfloat Ky = 0;
+        GLfloat shear[] = {     1   , Ky    , 0     , 0     ,
+                                Kx  , 1     , 0     , 0     ,
+                                0   , 0     , 1     , 0     ,
+                                0   , 0     , 0     , 1     };
+        glMultMatrixf(shear);
+        glutSolidCube(1);
+    }
+
+    //Sombra 2
+    {
+        glLoadIdentity();
+        glColor3f(0.2, 0.2, 0.2);
+        glTranslatef(-14.25, 0, -14.25);
+        glRotatef(-90, 1, 0, 0);
+        glScalef(20, 8.5, 0.01);
+        GLfloat Kx = -8.5/20;
+        GLfloat Ky = 0;
+        GLfloat shear[] = {     1   , Ky    , 0     , 0     ,
+                                Kx  , 1     , 0     , 0     ,
+                                0   , 0     , 1     , 0     ,
+                                0   , 0     , 0     , 1     };
+        glMultMatrixf(shear);
+        glutSolidCube(1);
+    }
+    glEnable(GL_LIGHTING);
 }
 void ShowTeapotForDebugging()
 {
@@ -599,12 +637,27 @@ void ShowEnemies()
             glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
             glScalef(1, 2, 1);
             glutSolidCube(1);
-
             glScalef(1, 0.5, 1);
 
             glDisable(GL_LIGHTING);
+
+            //Sombra
+            glColor3f(0.2, 0.2, 0.2);
+            glTranslatef(0, -1, 0);
+            glScalef(sqrt(2.0), 0.01, sqrt(2.0));
+            glRotatef(45, 0, 1, 0);
+            glTranslatef(0, 0, -1);
+            glScalef(1, 1, 2);
+            glutSolidCube(1);
+            glScalef(1, 1, 0.5);
+            glTranslatef(0, 0, 1);
+            glRotatef(-45, 0, 1, 0);
+            glScalef(1 / sqrt(2.0), 100, 1 / sqrt(2.0));
+            glTranslatef(0, 1, 0);
+
             glEnable(GL_TEXTURE_2D);
 
+            //Barra de vida
             glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (ENEMIGO_VIDAS_INICIAL - enemigo_vidas[i]));
             glBegin(GL_QUADS);
             {
