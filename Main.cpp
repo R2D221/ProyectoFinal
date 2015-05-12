@@ -26,7 +26,7 @@ using namespace irrklang;
 
 ISoundEngine* engine;
 
-GLfloat ang = 0;
+GLfloat ang = M_PI;
 GLfloat position[3];
 GLfloat distance = 5;
 
@@ -64,6 +64,7 @@ void ammo_increaseTimeAlive(int index)
 GLfloat enemigo_posicionInicial_X[ENEMIGO_CUENTA_INICIAL];
 GLfloat enemigo_posicionInicial_Y[ENEMIGO_CUENTA_INICIAL];
 GLfloat enemigo_posicionInicial_Z[ENEMIGO_CUENTA_INICIAL];
+GLfloat enemigo_angulo[ENEMIGO_CUENTA_INICIAL];
 int enemigo_vidas[ENEMIGO_CUENTA_INICIAL];
 
 GLMmodel *model;
@@ -141,22 +142,25 @@ void MoveEnemies()
     for (int i = 0; i < ENEMIGO_CUENTA_INICIAL; i++)
     {
         if (!enemigo_vidas[i]) continue;
-        if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
 
-        GLfloat enemigo_angulo =    atan2(
+        GLfloat este_enemigo_angulo =   atan2(
                                         (enemigo_posicionInicial_Z[i] - position[2]),
                                         (enemigo_posicionInicial_X[i] - position[0])
                                     );
-        enemigo_posicionInicial_X[i] -= cos(enemigo_angulo) * ENEMIGO_STEP;
-        enemigo_posicionInicial_Z[i] -= sin(enemigo_angulo) * ENEMIGO_STEP;
+
+        enemigo_angulo[i] = este_enemigo_angulo;
+        if (true) continue;
+        if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
+        enemigo_posicionInicial_X[i] -= cos(este_enemigo_angulo) * ENEMIGO_STEP;
+        enemigo_posicionInicial_Z[i] -= sin(este_enemigo_angulo) * ENEMIGO_STEP;
         GLfloat enemigo_posicionActual[3];
         enemigo_posicionActual[0] = enemigo_posicionInicial_X[i];
         enemigo_posicionActual[1] = enemigo_posicionInicial_Y[i];
         enemigo_posicionActual[2] = enemigo_posicionInicial_Z[i];
         if (IsCollidingWithWalls(enemigo_posicionActual))
         {
-            enemigo_posicionInicial_X[i] += cos(enemigo_angulo) * ENEMIGO_STEP;
-            enemigo_posicionInicial_Z[i] += sin(enemigo_angulo) * ENEMIGO_STEP;
+            enemigo_posicionInicial_X[i] += cos(este_enemigo_angulo) * ENEMIGO_STEP;
+            enemigo_posicionInicial_Z[i] += sin(este_enemigo_angulo) * ENEMIGO_STEP;
         }
     }
 }
@@ -437,7 +441,8 @@ void LoadTextures()
 void Init()
 {
     engine = createIrrKlangDevice();
-   // model = glmReadOBJ("onj_enemigo.obj");
+    //model = glmReadOBJ("creeper/Creeper_01.obj");
+    //model = glmReadOBJ("test.obj");
 
     PlayMusic();
 
@@ -582,9 +587,11 @@ void ShowCamera()
 void ShowLights()
 {
     GLfloat light_position[] = { 1, 1, 1, 0 };
-    GLfloat light_color[] = { 1, 1, 1 };
+    GLfloat light_color[] = { 0.5, 0.5, 0.5 };
+    GLfloat light_color_ambient[] = { 0.5, 0.5, 0.5 };
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_color_ambient);
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHT0);
@@ -610,17 +617,55 @@ void ShowFloor()
 }
 void ShowWalls()
 {
+    //Muro 1
     glLoadIdentity();
     glColor3f(0, 0.5, 0.5);
     glTranslatef(10.0, 1.0, 10.0);
-    glScaled(20, 15, 1);
+    glScalef(20, 15, 1);
     glutSolidCube(1);
 
+    //Muro 2
     glLoadIdentity();
     glColor3f(0, 0.5, 0.5);
     glTranslatef(-10.0, 1.0, -10.0);
-    glScaled(20, 15, 1);
+    glScalef(20, 15, 1);
     glutSolidCube(1);
+
+    glDisable(GL_LIGHTING);
+    //Sombra 1
+    {
+        glLoadIdentity();
+        glColor4f(0, 0, 0, 0.5);
+        glTranslatef(5.75, 0, 5.75);
+        glRotatef(-90, 1, 0, 0);
+        glScalef(20, 8.5, 0.01);
+        GLfloat Kx = -8.5/20;
+        GLfloat Ky = 0;
+        GLfloat shear[] = {     1   , Ky    , 0     , 0     ,
+                                Kx  , 1     , 0     , 0     ,
+                                0   , 0     , 1     , 0     ,
+                                0   , 0     , 0     , 1     };
+        glMultMatrixf(shear);
+        glutSolidCube(1);
+    }
+
+    //Sombra 2
+    {
+        glLoadIdentity();
+        glColor4f(0, 0, 0, 0.5);
+        glTranslatef(-14.25, 0, -14.25);
+        glRotatef(-90, 1, 0, 0);
+        glScalef(20, 8.5, 0.01);
+        GLfloat Kx = -8.5/20;
+        GLfloat Ky = 0;
+        GLfloat shear[] = {     1   , Ky    , 0     , 0     ,
+                                Kx  , 1     , 0     , 0     ,
+                                0   , 0     , 1     , 0     ,
+                                0   , 0     , 0     , 1     };
+        glMultMatrixf(shear);
+    glutSolidCube(1);
+}
+    glEnable(GL_LIGHTING);
 }
 void ShowTeapotForDebugging()
 {
@@ -652,13 +697,31 @@ void ShowEnemies()
             glColor3f(1, 0, 1);
             glTranslated(enemigo_posicionInicial_X[i], 1, enemigo_posicionInicial_Z[i]);
             glScalef(1, 2, 1);
+            glRotatef(-enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
             glutSolidCube(1);
-
+            glRotatef(enemigo_angulo[i] * 180 / M_PI, 0, 1, 0);
             glScalef(1, 0.5, 1);
 
             glDisable(GL_LIGHTING);
+
+            //Sombra
+            glColor4f(0, 0, 0, 0.5);
+            glTranslatef(0, -1, 0);
+            glScalef(sqrt(2.0), 0.02, sqrt(2.0));
+            glRotatef(45, 0, 1, 0);
+            glTranslatef(0, 0, -1);
+            glScalef(1, 1, 2);
+            glutSolidCube(1);
+            glScalef(1, 1, 0.5);
+            glTranslatef(0, 0, 1);
+            glRotatef(-45, 0, 1, 0);
+            glScalef(1 / sqrt(2.0), 50, 1 / sqrt(2.0));
+            glTranslatef(0, 1, 0);
+            glColor4f(1, 1, 1, 1);
+
             glEnable(GL_TEXTURE_2D);
 
+            //Barra de vida
             glBindTexture(GL_TEXTURE_2D, TEXTURE_LIFE_5 + (ENEMIGO_VIDAS_INICIAL - enemigo_vidas[i]));
             glBegin(GL_QUADS);
             {
@@ -688,10 +751,10 @@ void ShowInicioA(){
 
 	if (control == 22){
 		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOB);
-	}
+    }
 	else{
 		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOA);
-	}
+}
 
 	glLoadIdentity();
 	glBegin(GL_QUADS);
@@ -743,6 +806,9 @@ void Display()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    glColor4f(1, 1, 1, 1);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
 	if (seccion == PANTALLA_INICIO){
 		ShowInicioA();
@@ -751,21 +817,24 @@ void Display()
 		ShowInstrucciones();
 		}
 		else{
-			ShowStatusBar();
-			ShowCamera();
-			ShowLights();
-			ShowFloor();
-			ShowWalls();
-			ShowTeapotForDebugging();
-			ShowAmmo();
-			ShowEnemies();
+    ShowStatusBar();
+    ShowCamera();
+    ShowLights();
+    ShowFloor();
+    ShowWalls();
+    ShowTeapotForDebugging();
+    ShowAmmo();
+    ShowEnemies();
 		}
 
 
 
-    //glLoadIdentity();
-    //glTranslatef(5, 0, 0);
+    glLoadIdentity();
+    glTranslatef(-5, 0, 0);
+    glDisable(GL_BLEND);
+    glColor4f(1, 1, 1, 1);
     //glmDraw(model, GLM_TEXTURE | GLM_SMOOTH | GLM_MATERIAL);
+    glColor4f(1, 1, 1, 1);
 
     glLoadIdentity();
     glutSwapBuffers();
@@ -814,19 +883,19 @@ void Keyboard(unsigned char     key, int x, int y)
 				}
 				else{
 					for (int i = 0; i < AMMO_COUNT; i++)
-					{
-						if (!ammo_isActive[i])
-						{
-							ammo_isActive[i] = true;
-							ammo_initialPosition_x[i] = position[0];
-							ammo_initialPosition_y[i] = position[1];
-							ammo_initialPosition_z[i] = position[2];
-							ammo_angle[i] = ang;
-							ammo_timeAlive[i] = 0;
-							engine->play2D("shoot.wav", false);     //https://www.freesound.org/people/Quonux/sounds/166418/
-							break;
-						}
-					}
+                    {
+                        if (!ammo_isActive[i])
+                        {
+                            ammo_isActive[i] = true;
+                            ammo_initialPosition_x[i] = position[0];
+                            ammo_initialPosition_y[i] = position[1];
+                            ammo_initialPosition_z[i] = position[2];
+                            ammo_angle[i] = ang;
+                            ammo_timeAlive[i] = 0;
+                            engine->play2D("shoot.wav", false);     //https://www.freesound.org/people/Quonux/sounds/166418/
+                            break;
+                        }
+                    }
 
 				}
 			}
@@ -910,7 +979,7 @@ void Movimiento(int _i)
     }
     DetectEnemyCollidingWithPlayer();
     DetectEnemyCollidingWithAmmo();
-    //MoveEnemies();
+    MoveEnemies();
 
     glutTimerFunc(33, Movimiento, 0);
 }
