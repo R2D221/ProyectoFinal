@@ -77,6 +77,39 @@ bool d;
 #define JUGADOR_VIDAS_INICIAL 5
 int jugador_vidas = JUGADOR_VIDAS_INICIAL;
 
+#define TEXTURE_GRASS       3
+#define TEXTURE_HEART       4
+#define TEXTURE_LIFE_5      6
+#define TEXTURE_LIFE_4      7
+#define TEXTURE_LIFE_3      8
+#define TEXTURE_LIFE_2      9
+#define TEXTURE_LIFE_1      10
+#define TEXTURE_NUMBER_0    11
+#define TEXTURE_NUMBER_1    12
+#define TEXTURE_NUMBER_2    13
+#define TEXTURE_NUMBER_3    14
+#define TEXTURE_NUMBER_4    15
+#define TEXTURE_NUMBER_5    16
+#define TEXTURE_NUMBER_6    17
+#define TEXTURE_NUMBER_7    18
+#define TEXTURE_NUMBER_8    19
+#define TEXTURE_NUMBER_9    20
+#define TEXTURE_ENEMIES     21
+#define TEXTURE_INICIOA 22
+#define TEXTURE_INICIOB 23
+#define TEXTURE_INSTRUCCIONES  24
+#define TEXTURE_PERDER  25
+
+#define PANTALLA_INICIO 1
+#define PANTALLA_INSTRUCCIONES 2
+#define PANTALLA_JUEGO  3
+#define PANTALLA_PERDER 4
+
+int seccion = PANTALLA_INICIO;
+int control = TEXTURE_INICIOA;
+int accion = 0;
+int inicio = 0;
+
 GLfloat calculateDistance(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
 {
     return sqrt(pow(y2 - y1, 2) + pow(x2 - x1, 2));
@@ -132,7 +165,13 @@ void DetectEnemyCollidingWithPlayer()
             enemigosVivos--;
             jugador_vidas--;
             engine->play2D("hit_player.wav", false);    //https://www.freesound.org/people/LittleRobotSoundFactory/sounds/270311/
+			if (jugador_vidas < 0) {
+				engine->stopAllSounds();
+				seccion = PANTALLA_PERDER;
+				engine->play2D("youlose.wav");
+			}
             printf("Colision de enemigo con el jugador\n");
+			printf("Este es el valor del contador de vidas %i \n", jugador_vidas);
         }
     }
 }
@@ -149,7 +188,7 @@ void MoveEnemies()
                                     );
 
         enemigo_angulo[i] = este_enemigo_angulo;
-        if (true) continue;
+        //if (true) continue;
         if (calculateDistance(enemigo_posicionInicial_X[i], enemigo_posicionInicial_Z[i], position[0], position[2]) > 10.0) continue;
         enemigo_posicionInicial_X[i] -= cos(este_enemigo_angulo) * ENEMIGO_STEP;
         enemigo_posicionInicial_Z[i] -= sin(este_enemigo_angulo) * ENEMIGO_STEP;
@@ -175,39 +214,6 @@ void PlayMusic()
     //http://ericskiff.com/music/
     engine->play2D("music.wav", true);
 }
-
-#define TEXTURE_GRASS       3
-#define TEXTURE_HEART       4
-#define TEXTURE_LIFE_5      6
-#define TEXTURE_LIFE_4      7
-#define TEXTURE_LIFE_3      8
-#define TEXTURE_LIFE_2      9
-#define TEXTURE_LIFE_1      10
-#define TEXTURE_NUMBER_0    11
-#define TEXTURE_NUMBER_1    12
-#define TEXTURE_NUMBER_2    13
-#define TEXTURE_NUMBER_3    14
-#define TEXTURE_NUMBER_4    15
-#define TEXTURE_NUMBER_5    16
-#define TEXTURE_NUMBER_6    17
-#define TEXTURE_NUMBER_7    18
-#define TEXTURE_NUMBER_8    19
-#define TEXTURE_NUMBER_9    20
-#define TEXTURE_ENEMIES     21
-#define TEXTURE_INICIOA 22
-#define TEXTURE_INICIOB 23
-#define TEXTURE_INSTRUCCIONES  24
-#define TEXTURE_PERDER  25
-
-#define PANTALLA_INICIO 1
-#define PANTALLA_INSTRUCCIONES 2
-#define PANTALLA_JUEGO  3
-#define PANTALLA_PERDER 4
-
-int seccion = PANTALLA_INICIO;
-int control = TEXTURE_INICIOA;
-int accion = 0;
-int inicio = 0;
 
 void LoadTextures()
 {
@@ -750,10 +756,10 @@ void ShowInicioA(){
 	glEnable(GL_TEXTURE_2D);
 
 	if (control == 22){
-		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOB);
+		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOA);
     }
 	else{
-		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOA);
+		glBindTexture(GL_TEXTURE_2D, TEXTURE_INICIOB);
 }
 
 	glLoadIdentity();
@@ -799,6 +805,32 @@ void ShowInstrucciones(){
 	glEnd();
 }
 
+void ShowGameOver(){
+
+	int width = glutGet(GLUT_WINDOW_WIDTH);
+	int height = glutGet(GLUT_WINDOW_HEIGHT);
+
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, TEXTURE_PERDER);
+	glLoadIdentity();
+	glBegin(GL_QUADS);
+	{
+		int width = glutGet(GLUT_WINDOW_WIDTH);
+		int height = glutGet(GLUT_WINDOW_HEIGHT);
+		GLfloat x1 = 0;
+		GLfloat x2 = 1;
+		GLfloat y1 = 0;
+		GLfloat y2 = 1;
+		glTexCoord2f(1, 1);         glVertex3f(x2 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 1);         glVertex3f(x1 * 2 - 1, y2 * 2 - 1, 0);
+		glTexCoord2f(0, 0);         glVertex3f(x1 * 2 - 1, y1 * 2 - 1, 0);
+		glTexCoord2f(1, 0);         glVertex3f(x2 * 2 - 1, y1 * 2 - 1, 0);
+	}
+	glEnd();
+}
+
 
 void Display()
 {
@@ -813,18 +845,23 @@ void Display()
 	if (seccion == PANTALLA_INICIO){
 		ShowInicioA();
 	}
-	else if (seccion == 2){
+	else if (seccion == PANTALLA_INSTRUCCIONES){
 		ShowInstrucciones();
+	}
+	else{
+		if (seccion == PANTALLA_PERDER){
+			ShowGameOver();
 		}
 		else{
-    ShowStatusBar();
-    ShowCamera();
-    ShowLights();
-    ShowFloor();
-    ShowWalls();
-    ShowTeapotForDebugging();
-    ShowAmmo();
-    ShowEnemies();
+			ShowStatusBar();
+			ShowCamera();
+			ShowLights();
+			ShowFloor();
+			ShowWalls();
+			ShowTeapotForDebugging();
+			ShowAmmo();
+			ShowEnemies();
+		}
 		}
 
 
@@ -871,10 +908,10 @@ void Keyboard(unsigned char     key, int x, int y)
 
         case ' ':
 			if (control == 22 && seccion==PANTALLA_INICIO){
-				seccion = 2;
+				seccion = 3;
 			}
 			else if (control == 23 && seccion == PANTALLA_INICIO){
-				seccion = 3;
+				seccion = 2;
 			}
 
 			if (seccion == 3){
